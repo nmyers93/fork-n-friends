@@ -1,6 +1,8 @@
+import './RestaurantList.css'
+
 function RestaurantList({ restaurants }) {
     return (
-        <div>
+        <div className="restaurant-list">
             <h2>My Restaurants</h2>
             {restaurants.length === 0 ? (
                 <p>No restaurants yet. Add one above!</p>

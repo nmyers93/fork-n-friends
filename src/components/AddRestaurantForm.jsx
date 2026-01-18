@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import './addRestaurantForm.css'
 
 function AddRestaurantForm({ onAddRestaurant }) {
     const [restaurantName, setRestaurantName] = useState('')
@@ -16,13 +17,14 @@ function AddRestaurantForm({ onAddRestaurant }) {
 
         onAddRestaurant(newRestaurant)
 
+        // Clear the form
         setRestaurantName('')
         setCuisine('')
         setLocation('')
     }
 
     return (
-        <div>
+        <div className="add-restaurant-form">
             <h2>Add a Restaurant</h2>
 
             <form onSubmit={(handleSubmit)}>

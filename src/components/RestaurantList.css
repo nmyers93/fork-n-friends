@@ -1,0 +1,40 @@
+.restaurant-list {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.restaurant-list h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.restaurant-list p {
+    color: #666;
+    font-style: italic;
+}
+
+.restaurant-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.restaurant-list li {
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+    transition: box-shadow 0.2s;
+}
+
+.restaurant-list li:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.restaurant-list li strong {
+    color: #4CAF50;
+    font-size: 1.1rem;
+}
