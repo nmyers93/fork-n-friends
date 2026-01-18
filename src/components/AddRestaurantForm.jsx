@@ -12,7 +12,8 @@ function AddRestaurantForm({ onAddRestaurant }) {
         const newRestaurant = {
             name: restaurantName,
             cuisine: cuisine,
-            location: location
+            location: location,
+            rating: 0
         }
 
         onAddRestaurant(newRestaurant)

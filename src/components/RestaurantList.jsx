@@ -1,6 +1,7 @@
 import './RestaurantList.css'
+import StarRating from './StarRating'
 
-function RestaurantList({ restaurants }) {
+function RestaurantList({ restaurants, onUpdateRating }) {
     return (
         <div className="restaurant-list">
             <h2>My Restaurants</h2>
@@ -11,6 +12,10 @@ function RestaurantList({ restaurants }) {
                     {restaurants.map((restaurant, index) => (
                         <li key={index}>
                             <strong>{restaurant.name}</strong> - {restaurant.cuisine} ({restaurant.location})
+                            <StarRating 
+                                rating={restaurant.rating}
+                                onRatingChange={(newRating) => onUpdateRating(index, newRating)}
+                            />
                         </li>
                     ))}
                 </ul>

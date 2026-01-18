@@ -12,6 +12,12 @@ function App() {
     console.log('All restaurants:', [...restaurants, restaurant])
   }
 
+  const updateRating = (index, newRating) => {
+    const updatedRestaurants = [...restaurants]
+    updatedRestaurants[index].rating = newRating
+    setRestaurants(updatedRestaurants)
+  }
+
   return (
     <div className="app">
       <header>
@@ -20,7 +26,7 @@ function App() {
       </header>
 
       <AddRestaurantForm onAddRestaurant={addRestaurant} />
-      <RestaurantList restaurants={restaurants} />
+      <RestaurantList restaurants={restaurants} onUpdateRating={updateRating}/>
     </div>
   )
 }
