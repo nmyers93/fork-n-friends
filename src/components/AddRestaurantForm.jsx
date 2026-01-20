@@ -8,6 +8,7 @@ function AddRestaurantForm({ onAddRestaurant }) {
   const [location, setLocation] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
+  const [errors, setErrors] = useState({})
 
   const handleSearch = async () => {
     if (searchQuery.trim()) {
@@ -23,10 +24,34 @@ function AddRestaurantForm({ onAddRestaurant }) {
     setLocation(restaurant.location?.formatted_address || '')
     setSearchResults([])
     setSearchQuery('')
+    setErrors({})
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!restaurantName.trim()) {
+      newErrors.name = 'Restaurant name is required'
+    }
+
+    if (!cuisine.trim()) {
+      newErrors.cuisine = 'Cuisine type is required'
+    }
+
+    if (!location.trim()) {
+      newErrors.location = 'Location is required'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
+
+    if (!validateForm()) {
+      return
+    }
     
     const newRestaurant = {
       name: restaurantName,
@@ -73,26 +98,35 @@ function AddRestaurantForm({ onAddRestaurant }) {
       )}
       
       <form onSubmit={handleSubmit}>
-        <input 
-          type="text"
-          placeholder="Restaurant name"
-          value={restaurantName}
-          onChange={(e) => setRestaurantName(e.target.value)}
-        />
+        <div>
+          <input 
+            type="text"
+            placeholder="Restaurant name"
+            value={restaurantName}
+            onChange={(e) => setRestaurantName(e.target.value)}
+          />
+          {errors.name && <span className="error-message">{errors.name}</span>}
+        </div>
         
-        <input 
-          type="text"
-          placeholder="Cuisine type (e.g., Italian, Mexican)"
-          value={cuisine}
-          onChange={(e) => setCuisine(e.target.value)}
-        />
+        <div>
+          <input 
+            type="text"
+            placeholder="Cuisine type (e.g., Italian, Mexican)"
+            value={cuisine}
+            onChange={(e) => setCuisine(e.target.value)}
+          />
+          {errors.cuisine && <span className="error-message">{errors.cuisine}</span>}
+        </div>
+        <div>
+          <input 
+            type="text"
+            placeholder="Location/Address"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+          />
+          {errors.location && <span className="error-message">{errors.location}</span>}
+        </div>
         
-        <input 
-          type="text"
-          placeholder="Location/Address"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-        />
         
         <button type="submit">Add Restaurant</button>
       </form>

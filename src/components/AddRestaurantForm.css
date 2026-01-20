@@ -108,3 +108,15 @@
     color: #666;
     font-size: 0.9rem;
 }
+
+.add-restaurant-form input.error {
+    border-color: #f44336;
+}
+
+.error-message {
+    display: block;
+    color: #f44336;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+}
