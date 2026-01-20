@@ -18,6 +18,11 @@ function App() {
     setRestaurants(updatedRestaurants)
   }
 
+  const deleteRestaurant = (index) => {
+    const updatedRestaurants = restaurants.filter((_, i) => i !== index)
+    setRestaurants(updatedRestaurants)
+  }
+
   return (
     <div className="app">
       <header>
@@ -26,7 +31,11 @@ function App() {
       </header>
 
       <AddRestaurantForm onAddRestaurant={addRestaurant} />
-      <RestaurantList restaurants={restaurants} onUpdateRating={updateRating}/>
+      <RestaurantList 
+        restaurants={restaurants} 
+        onUpdateRating={updateRating}
+        onDeleteRestaurant={deleteRestaurant}
+      />
     </div>
   )
 }
