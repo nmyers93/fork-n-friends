@@ -2,22 +2,41 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import AddRestaurantForm from './components/AddRestaurantForm'
 import RestaurantList from './components/RestaurantList'
+import Auth from './components/Auth'
 import { supabase } from './utils/supabaseClient'
 
 function App() {
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(null)
 
-  // Load restaurants when app starts
+  // Check if user is logged in
   useEffect(() => {
-    fetchRestaurants()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
+
+  // Load restaurants when user logs in
+  useEffect(() => {
+    if (user) {
+      fetchRestaurants()
+    }
+  }, [user])
 
   const fetchRestaurants = async () => {
     try {
       const { data, error } = await supabase
         .from('restaurants')
         .select('*')
+        .eq('owner_id', user.id)
         .order('created_at', { ascending: false })
       
       if (error) throw error
@@ -25,8 +44,6 @@ function App() {
       setRestaurants(data || [])
     } catch (error) {
       console.error('Error fetching restaurants:', error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -41,7 +58,7 @@ function App() {
           rating: restaurant.rating,
           is_wishlist: false,
           is_hidden: false,
-          owner_id: '00000000-0000-0000-0000-000000000000' // Temporary - we'll fix with auth
+          owner_id: user.id
         }])
         .select()
       
@@ -92,8 +109,25 @@ function App() {
     }
   }
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    setRestaurants([])
+  }
+
   if (loading) {
     return <div className="app"><p>Loading...</p></div>
+  }
+
+  if (!user) {
+    return (
+      <div className="app">
+        <header>
+          <h1>🍴 Fork n' Friends</h1>
+          <p>Decide where to eat with your friends</p>
+        </header>
+        <Auth />
+      </div>
+    )
   }
 
   return (
@@ -101,6 +135,7 @@ function App() {
       <header>
         <h1>🍴 Fork n' Friends</h1>
         <p>Decide where to eat with your friends</p>
+        <button onClick={handleSignOut} className="sign-out-btn">Sign Out</button>
       </header>
       
       <AddRestaurantForm onAddRestaurant={addRestaurant} />
