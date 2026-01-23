@@ -6,6 +6,7 @@ function Auth() {
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [username, setUsername] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -16,12 +17,18 @@ function Auth() {
 
     try {
       if (isSignUp) {
+        // Sign up with username in metadata
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              username: username
+            }
+          }
         })
         if (error) throw error
-        setMessage('Check your email for confirmation link!')
+        setMessage('Account created successfully!')
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -41,6 +48,15 @@ function Auth() {
     <div className="auth-container">
       <h2>{isSignUp ? 'Sign Up' : 'Log In'}</h2>
       <form onSubmit={handleAuth}>
+        {isSignUp && (
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        )}
         <input
           type="email"
           placeholder="Email"

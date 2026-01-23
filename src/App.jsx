@@ -9,6 +9,7 @@ function App() {
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState(null)
+  const [username, setUsername] = useState('')
 
   // Check if user is logged in
   useEffect(() => {
@@ -24,12 +25,29 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Load restaurants when user logs in
+  // Fetch username when user logs in
   useEffect(() => {
     if (user) {
+      fetchUsername()
       fetchRestaurants()
     }
   }, [user])
+
+  const fetchUsername = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single()
+      
+      if (error) throw error
+      
+      setUsername(data.username)
+    } catch (error) {
+      console.error('Error fetching username:', error)
+    }
+  }
 
   const fetchRestaurants = async () => {
     try {
@@ -112,6 +130,7 @@ function App() {
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     setRestaurants([])
+    setUsername('')
   }
 
   if (loading) {
@@ -133,9 +152,14 @@ function App() {
   return (
     <div className="app">
       <header>
+        <div className="user-menu">
+          <div className="user-info">
+            Logged in as <strong>{username || user.email}</strong>
+          </div>
+          <button onClick={handleSignOut} className="sign-out-btn">Sign Out</button>
+        </div>
         <h1>🍴 Fork n' Friends</h1>
         <p>Decide where to eat with your friends</p>
-        <button onClick={handleSignOut} className="sign-out-btn">Sign Out</button>
       </header>
       
       <AddRestaurantForm onAddRestaurant={addRestaurant} />
