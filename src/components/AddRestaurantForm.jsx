@@ -9,6 +9,7 @@ function AddRestaurantForm({ onAddRestaurant }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [errors, setErrors] = useState({})
+  const [isWishlist, setIsWishlist] = useState(false)
 
   const handleSearch = async () => {
     if (searchQuery.trim()) {
@@ -29,26 +30,26 @@ function AddRestaurantForm({ onAddRestaurant }) {
 
   const validateForm = () => {
     const newErrors = {}
-
+    
     if (!restaurantName.trim()) {
       newErrors.name = 'Restaurant name is required'
     }
-
+    
     if (!cuisine.trim()) {
       newErrors.cuisine = 'Cuisine type is required'
     }
-
+    
     if (!location.trim()) {
       newErrors.location = 'Location is required'
     }
-
+    
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-
+    
     if (!validateForm()) {
       return
     }
@@ -57,7 +58,8 @@ function AddRestaurantForm({ onAddRestaurant }) {
       name: restaurantName,
       cuisine: cuisine,
       location: location,
-      rating: 0
+      rating: 0,
+      is_wishlist: isWishlist
     }
     
     onAddRestaurant(newRestaurant)
@@ -66,6 +68,8 @@ function AddRestaurantForm({ onAddRestaurant }) {
     setRestaurantName('')
     setCuisine('')
     setLocation('')
+    setErrors({})
+    setIsWishlist(false)
   }
 
   return (
@@ -78,9 +82,15 @@ function AddRestaurantForm({ onAddRestaurant }) {
           placeholder="Search for a restaurant..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              handleSearch()
+            }
+          }}
         />
-        <button type="button" onClick={handleSearch}>Search</button>
-      </div>
+      <button type="button" onClick={handleSearch}>Search</button>
+    </div>
 
       {searchResults.length > 0 && (
         <div className="search-results">
@@ -104,6 +114,7 @@ function AddRestaurantForm({ onAddRestaurant }) {
             placeholder="Restaurant name"
             value={restaurantName}
             onChange={(e) => setRestaurantName(e.target.value)}
+            className={errors.name ? 'error' : ''}
           />
           {errors.name && <span className="error-message">{errors.name}</span>}
         </div>
@@ -114,19 +125,32 @@ function AddRestaurantForm({ onAddRestaurant }) {
             placeholder="Cuisine type (e.g., Italian, Mexican)"
             value={cuisine}
             onChange={(e) => setCuisine(e.target.value)}
+            className={errors.cuisine ? 'error' : ''}
           />
           {errors.cuisine && <span className="error-message">{errors.cuisine}</span>}
         </div>
+        
         <div>
           <input 
             type="text"
             placeholder="Location/Address"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
+            className={errors.location ? 'error' : ''}
           />
           {errors.location && <span className="error-message">{errors.location}</span>}
         </div>
-        
+
+        <div className="wishlist-toggle">
+          <label>
+            <input 
+              type="checkbox"
+              checked={isWishlist}
+              onChange={(e) => setIsWishlist(e.target.checked)}
+            />
+            <span>Add to wishlist (want to try)</span>
+          </label>
+        </div>
         
         <button type="submit">Add Restaurant</button>
       </form>

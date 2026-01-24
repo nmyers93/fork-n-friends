@@ -74,7 +74,7 @@ function App() {
           cuisine: restaurant.cuisine,
           location: restaurant.location,
           rating: restaurant.rating,
-          is_wishlist: false,
+          is_wishlist: restaurant.is_wishlist,
           is_hidden: false,
           owner_id: user.id
         }])

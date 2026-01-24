@@ -120,3 +120,25 @@
     margin-top: 0.25rem;
     margin-bottom: 0.5rem;
 }
+
+.wishlist-toggle {
+    display: flex;
+    align-items: center;
+}
+
+.wishlist-toggle label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.wishlist-toggle input[type="checkbox"] {
+    width: auto;
+    cursor: pointer;
+}
+
+.wishlist-toggle span {
+    color: #666;
+}
