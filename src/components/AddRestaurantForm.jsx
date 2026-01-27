@@ -2,15 +2,39 @@ import { useState } from 'react'
 import './AddRestaurantForm.css'
 import { searchRestaurants } from '../utils/foursquare'
 
+/**
+ * AddRestaurantForm Component
+ * 
+ * Allows users to add restaurants to their list either by:
+ * 1. Searching Foursquare API and selecting from results
+ * 2. Manually entering restaurant details
+ * 
+ * Features:
+ * - Real-time form validation
+ * - Auto-populate from API search results
+ * - Wishlist toggle (tried vs want-to-try)
+ * - Enter key support for search
+ * 
+ * @param {Function} onAddRestaurant - Callback to add restaurant to database
+ */
 function AddRestaurantForm({ onAddRestaurant }) {
+  // Form field states
   const [restaurantName, setRestaurantName] = useState('')
   const [cuisine, setCuisine] = useState('')
   const [location, setLocation] = useState('')
+  
+  // Search functionality states
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
+  
+  // Validation and wishlist states
   const [errors, setErrors] = useState({})
   const [isWishlist, setIsWishlist] = useState(false)
 
+  /**
+   * Search for restaurants using Foursquare API
+   * Triggered by search button or Enter key
+   */
   const handleSearch = async () => {
     if (searchQuery.trim()) {
       const results = await searchRestaurants(searchQuery)
@@ -19,6 +43,12 @@ function AddRestaurantForm({ onAddRestaurant }) {
     }
   }
 
+  /**
+   * Auto-populate form fields when user selects a search result
+   * Also clears search results and any existing errors
+   * 
+   * @param {Object} restaurant - Restaurant object from Foursquare API
+   */
   const selectRestaurant = (restaurant) => {
     setRestaurantName(restaurant.name)
     setCuisine(restaurant.categories?.[0]?.name || '')
@@ -28,6 +58,12 @@ function AddRestaurantForm({ onAddRestaurant }) {
     setErrors({})
   }
 
+  /**
+   * Validate form fields before submission
+   * Checks that name, cuisine, and location are not empty
+   * 
+   * @returns {boolean} - True if form is valid, false otherwise
+   */
   const validateForm = () => {
     const newErrors = {}
     
@@ -44,27 +80,37 @@ function AddRestaurantForm({ onAddRestaurant }) {
     }
     
     setErrors(newErrors)
+    // Return true if no errors (empty object)
     return Object.keys(newErrors).length === 0
   }
 
+  /**
+   * Handle form submission
+   * Validates form, calls parent callback, and resets form
+   * 
+   * @param {Event} e - Form submit event
+   */
   const handleSubmit = (e) => {
     e.preventDefault()
     
+    // Don't submit if validation fails
     if (!validateForm()) {
       return
     }
     
+    // Create restaurant object with all form data
     const newRestaurant = {
       name: restaurantName,
       cuisine: cuisine,
       location: location,
-      rating: 0,
+      rating: 0, // New restaurants start unrated
       is_wishlist: isWishlist
     }
     
+    // Call parent component's add function
     onAddRestaurant(newRestaurant)
     
-    // Clear the form
+    // Reset form to initial state
     setRestaurantName('')
     setCuisine('')
     setLocation('')
@@ -76,6 +122,7 @@ function AddRestaurantForm({ onAddRestaurant }) {
     <div className="add-restaurant-form">
       <h2>Add a Restaurant</h2>
       
+      {/* Search section for Foursquare API */}
       <div className="search-section">
         <input 
           type="text"
@@ -83,15 +130,17 @@ function AddRestaurantForm({ onAddRestaurant }) {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={(e) => {
+            // Allow Enter key to trigger search
             if (e.key === 'Enter') {
               e.preventDefault()
               handleSearch()
             }
           }}
         />
-      <button type="button" onClick={handleSearch}>Search</button>
-    </div>
+        <button type="button" onClick={handleSearch}>Search</button>
+      </div>
 
+      {/* Display search results if any */}
       {searchResults.length > 0 && (
         <div className="search-results">
           {searchResults.map((restaurant, index) => (
@@ -107,7 +156,9 @@ function AddRestaurantForm({ onAddRestaurant }) {
         </div>
       )}
       
+      {/* Main form for restaurant details */}
       <form onSubmit={handleSubmit}>
+        {/* Restaurant name field with validation */}
         <div>
           <input 
             type="text"
@@ -119,6 +170,7 @@ function AddRestaurantForm({ onAddRestaurant }) {
           {errors.name && <span className="error-message">{errors.name}</span>}
         </div>
         
+        {/* Cuisine type field with validation */}
         <div>
           <input 
             type="text"
@@ -130,6 +182,7 @@ function AddRestaurantForm({ onAddRestaurant }) {
           {errors.cuisine && <span className="error-message">{errors.cuisine}</span>}
         </div>
         
+        {/* Location field with validation */}
         <div>
           <input 
             type="text"
@@ -141,6 +194,7 @@ function AddRestaurantForm({ onAddRestaurant }) {
           {errors.location && <span className="error-message">{errors.location}</span>}
         </div>
 
+        {/* Wishlist toggle checkbox */}
         <div className="wishlist-toggle">
           <label>
             <input 

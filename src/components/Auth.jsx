@@ -2,14 +2,37 @@ import { useState } from 'react'
 import { supabase } from '../utils/supabaseClient'
 import './Auth.css'
 
+/**
+ * Auth Component
+ * 
+ * Handles user authentication (signup and login)
+ * 
+ * Features:
+ * - Toggle between signup and login modes
+ * - Custom username during signup
+ * - Password and email validation
+ * - Error and success messages
+ * - Integrates with Supabase Auth
+ * 
+ * Username is stored in user metadata and automatically
+ * added to profiles table via database trigger
+ */
 function Auth() {
+  // Form states
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
-  const [isSignUp, setIsSignUp] = useState(false)
-  const [message, setMessage] = useState('')
+  
+  // UI states
+  const [isSignUp, setIsSignUp] = useState(false) // Toggle between signup/login
+  const [message, setMessage] = useState('') // Success or error messages
 
+  /**
+   * Handle authentication (signup or login)
+   * 
+   * @param {Event} e - Form submit event
+   */
   const handleAuth = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -17,19 +40,20 @@ function Auth() {
 
     try {
       if (isSignUp) {
-        // Sign up with username in metadata
+        // Sign up new user with username in metadata
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
-              username: username
+              username: username // Stored in user metadata
             }
           }
         })
         if (error) throw error
         setMessage('Account created successfully!')
       } else {
+        // Log in existing user
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -38,6 +62,7 @@ function Auth() {
         setMessage('Logged in successfully!')
       }
     } catch (error) {
+      // Display error message from Supabase
       setMessage(error.message)
     } finally {
       setLoading(false)
@@ -48,6 +73,7 @@ function Auth() {
     <div className="auth-container">
       <h2>{isSignUp ? 'Sign Up' : 'Log In'}</h2>
       <form onSubmit={handleAuth}>
+        {/* Username field - only shown during signup */}
         {isSignUp && (
           <input
             type="text"
@@ -57,6 +83,8 @@ function Auth() {
             required
           />
         )}
+        
+        {/* Email field - always shown */}
         <input
           type="email"
           placeholder="Email"
@@ -64,6 +92,8 @@ function Auth() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
+        
+        {/* Password field - always shown */}
         <input
           type="password"
           placeholder="Password"
@@ -71,13 +101,17 @@ function Auth() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        
+        {/* Submit button with loading state */}
         <button type="submit" disabled={loading}>
           {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Log In')}
         </button>
       </form>
       
+      {/* Display success or error message */}
       {message && <p className="auth-message">{message}</p>}
       
+      {/* Toggle between signup and login */}
       <button 
         type="button"
         onClick={() => setIsSignUp(!isSignUp)}
