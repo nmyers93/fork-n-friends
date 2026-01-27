@@ -31,15 +31,15 @@ const API_KEY = import.meta.env.VITE_FOURSQUARE_API_KEY
  *   ]
  * }
  */
-export const searchRestaurants = async (query, location = 'New York') => {
-  // Use /api proxy configured in vite.config.js to avoid CORS
+export const searchRestaurants = async (query, location = 'Chicago') => {
+  // Use /places proxy configured in vite.config.js to avoid CORS
   // categories=13000 filters to Food & Dining category
-  const url = `/api/v3/places/search?query=${encodeURIComponent(query)}&near=${encodeURIComponent(location)}&categories=13000`
+  const url = `/places/search?query=${encodeURIComponent(query)}&near=${encodeURIComponent(location)}&categories=13000`
   
   try {
     const response = await fetch(url, {
       headers: {
-        'Authorization': API_KEY, // API key for authentication
+        'Authorization': 'Bearer' + API_KEY, // API key for authentication
         'Accept': 'application/json',
         'X-Places-Api-Version': '2025-06-17' // Required API version header
       }
