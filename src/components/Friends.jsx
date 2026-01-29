@@ -10,7 +10,7 @@ import './Friends.css'
  * - Sending friend requests
  * - Accepting/declining friend requests
  * - Viewing friends list
- * - Removing friends
+ * - Unfriending users (removes both sides of friendship)
  * 
  * Creates bidirectional friendships (both users have friendship records)
  * 
@@ -194,26 +194,37 @@ function Friends({ userId }) {
   }
 
   /**
-   * Remove a friend
-   * Deletes the friendship record (user should also delete reciprocal)
+   * Unfriend a user
+   * Deletes BOTH friendship records (bidirectional unfriend)
    * Shows confirmation dialog before deletion
    * 
-   * @param {string} friendshipId - UUID of the friendship to delete
+   * @param {string} friendshipId - UUID of your friendship record
+   * @param {string} friendId - UUID of the friend to unfriend
    */
-  const removeFriend = async (friendshipId) => {
-    if (!confirm('Are you sure you want to remove this friend?')) return
+  const unfriendUser = async (friendshipId, friendId) => {
+    if (!confirm('Are you sure you want to unfriend this user?')) return
 
     try {
-      const { error } = await supabase
+      // Delete your friendship record
+      const { error: deleteError1 } = await supabase
         .from('friendships')
         .delete()
         .eq('id', friendshipId)
       
-      if (error) throw error
+      if (deleteError1) throw deleteError1
+
+      // Delete their friendship record (reciprocal)
+      const { error: deleteError2 } = await supabase
+        .from('friendships')
+        .delete()
+        .eq('user_id', friendId)
+        .eq('friend_id', userId)
+      
+      if (deleteError2) throw deleteError2
       
       fetchFriends()
     } catch (error) {
-      console.error('Error removing friend:', error)
+      console.error('Error unfriending user:', error)
     }
   }
 
@@ -296,9 +307,9 @@ function Friends({ userId }) {
               <span><strong>{friendship.profiles.username}</strong></span>
               <button 
                 className="remove-btn"
-                onClick={() => removeFriend(friendship.id)}
+                onClick={() => unfriendUser(friendship.id, friendship.friend_id)}
               >
-                Remove
+                Unfriend
               </button>
             </div>
           ))
