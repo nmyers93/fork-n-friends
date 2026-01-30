@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './AddRestaurantForm.css'
-import { searchRestaurants } from '../utils/foursquare'
+import { foursquare } from '../services/api'
 
 /**
  * AddRestaurantForm Component
@@ -36,12 +36,16 @@ function AddRestaurantForm({ onAddRestaurant }) {
    * Triggered by search button or Enter key
    */
   const handleSearch = async () => {
-    if (searchQuery.trim()) {
-      const results = await searchRestaurants(searchQuery)
-      setSearchResults(results)
-      console.log('Search results:', results)
+  if (searchQuery.trim()) {
+    try {
+      const data = await foursquare.search(searchQuery)
+      setSearchResults(data.results || [])
+    } catch (error) {
+      console.error('Search error:', error)
+      setSearchResults([])
     }
   }
+}
 
   /**
    * Auto-populate form fields when user selects a search result
