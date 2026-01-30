@@ -1,23 +1,14 @@
 import { useState } from 'react'
-import { supabase } from '../utils/supabaseClient'
+import { auth } from '../services/api'
 import './Auth.css'
 
 /**
  * Auth Component
  * 
  * Handles user authentication (signup and login)
- * 
- * Features:
- * - Toggle between signup and login modes
- * - Custom username during signup
- * - Password and email validation
- * - Error and success messages
- * - Integrates with Supabase Auth
- * 
- * Username is stored in user metadata and automatically
- * added to profiles table via database trigger
+ * Now uses custom Node.js backend instead of Supabase
  */
-function Auth() {
+function Auth({ onAuthSuccess }) {
   // Form states
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
@@ -25,13 +16,11 @@ function Auth() {
   const [username, setUsername] = useState('')
   
   // UI states
-  const [isSignUp, setIsSignUp] = useState(false) // Toggle between signup/login
-  const [message, setMessage] = useState('') // Success or error messages
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [message, setMessage] = useState('')
 
   /**
    * Handle authentication (signup or login)
-   * 
-   * @param {Event} e - Form submit event
    */
   const handleAuth = async (e) => {
     e.preventDefault()
@@ -40,29 +29,24 @@ function Auth() {
 
     try {
       if (isSignUp) {
-        // Sign up new user with username in metadata
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              username: username // Stored in user metadata
-            }
-          }
-        })
-        if (error) throw error
+        // Sign up new user
+        const data = await auth.signup(username, email, password)
         setMessage('Account created successfully!')
+        // Notify parent component of successful auth
+        if (onAuthSuccess) {
+          onAuthSuccess(data.user)
+        }
       } else {
         // Log in existing user
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-        if (error) throw error
+        const data = await auth.login(email, password)
         setMessage('Logged in successfully!')
+        // Notify parent component of successful auth
+        if (onAuthSuccess) {
+          onAuthSuccess(data.user)
+        }
       }
     } catch (error) {
-      // Display error message from Supabase
+      // Display error message
       setMessage(error.message)
     } finally {
       setLoading(false)
@@ -84,7 +68,7 @@ function Auth() {
           />
         )}
         
-        {/* Email field - always shown */}
+        {/* Email field */}
         <input
           type="email"
           placeholder="Email"
@@ -93,7 +77,7 @@ function Auth() {
           required
         />
         
-        {/* Password field - always shown */}
+        {/* Password field */}
         <input
           type="password"
           placeholder="Password"
@@ -102,19 +86,22 @@ function Auth() {
           required
         />
         
-        {/* Submit button with loading state */}
+        {/* Submit button */}
         <button type="submit" disabled={loading}>
           {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Log In')}
         </button>
       </form>
       
-      {/* Display success or error message */}
+      {/* Display message */}
       {message && <p className="auth-message">{message}</p>}
       
       {/* Toggle between signup and login */}
       <button 
         type="button"
-        onClick={() => setIsSignUp(!isSignUp)}
+        onClick={() => {
+          setIsSignUp(!isSignUp)
+          setMessage('')
+        }}
         className="toggle-auth"
       >
         {isSignUp ? 'Already have an account? Log in' : 'Need an account? Sign up'}

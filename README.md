@@ -1,15 +1,15 @@
 # 🍴 Fork n' Friends
 
-A social restaurant rating app where you and your friends can save favorites, compare restaurants, and randomly decide where to eat.
+A full-stack social restaurant rating app where you and your friends can save favorites, compare restaurants, and randomly decide where to eat.
 
 ## Features
 
 ### Current Features ✅
 
 #### User Management
-- **User Authentication** - Secure signup/login with email and password
+- **User Authentication** - JWT-based authentication with secure password hashing
 - **Custom Usernames** - Choose your own display name during signup
-- **Profile Management** - User profiles stored in database
+- **Session Management** - Persistent login with token-based auth
 
 #### Restaurant Management
 - **Search Integration** - Search for restaurants via Foursquare Places API
@@ -18,7 +18,7 @@ A social restaurant rating app where you and your friends can save favorites, co
 - **Star Ratings** - 5-star rating system for each restaurant (0-5 stars)
 - **Wishlist vs Tried** - Separate restaurants into "Tried" and "Wishlist" categories
 - **Delete Restaurants** - Remove restaurants from your lists
-- **Data Persistence** - All data stored in Supabase PostgreSQL database
+- **Data Persistence** - All data stored in PostgreSQL database
 
 #### Social Features
 - **Friend System** - Search for users and send friend requests
@@ -27,6 +27,7 @@ A social restaurant rating app where you and your friends can save favorites, co
 - **View Friends' Restaurants** - Browse non-hidden restaurants from your friends
 - **Grouped Display** - Friends' restaurants displayed grouped by friend
 - **Privacy Controls** - Mark restaurants as hidden from friends
+- **Bidirectional Unfriend** - Properly removes friendship from both sides
 
 #### Form & Validation
 - **Form Validation** - Ensures all required fields are filled before submission
@@ -38,36 +39,67 @@ A social restaurant rating app where you and your friends can save favorites, co
 - Group/collaborative restaurant lists
 - Toggle restaurants between wishlist and tried
 - Filter and sort restaurants by cuisine or rating
-- Hide/unhide individual restaurants from friends
 - Restaurant notes and reviews
+- Email notifications
+- Password reset functionality
 
 ## Tech Stack
 
-- **Frontend:** React 18 + Vite
-- **Database:** Supabase (PostgreSQL)
-- **Authentication:** Supabase Auth
-- **API Integration:** Foursquare Places API
-- **Styling:** Custom CSS with responsive design
-- **State Management:** React Hooks (useState, useEffect)
+### Frontend
+- **React 18** - Component-based UI library
+- **Vite** - Fast build tool and dev server
+- **Custom CSS** - Responsive design with flexbox/grid
+
+### Backend
+- **Node.js** - JavaScript runtime
+- **Express.js** - Web application framework
+- **PostgreSQL** - Relational database
+- **JWT** - JSON Web Tokens for authentication
+- **bcrypt** - Password hashing
+
+### External APIs
+- **Foursquare Places API** - Restaurant search and data
+
+## Architecture
+
+This is a **monorepo** containing both frontend and backend:
+```
+fork-n-friends/
+├── client/              # React frontend
+│   ├── src/
+│   │   ├── components/  # React components
+│   │   ├── services/    # API service layer
+│   │   └── utils/       # Utility functions
+│   └── package.json
+│
+├── server/              # Node.js backend
+│   ├── controllers/     # Request handlers
+│   ├── routes/          # API routes
+│   ├── middleware/      # Auth middleware
+│   ├── config/          # Database config
+│   └── package.json
+│
+└── README.md
+```
 
 ## Database Schema
 
 ### Tables
 
-**profiles**
-- Stores user information (username, email)
-- Links to Supabase Auth users
+**users**
+- Stores user accounts with hashed passwords
+- Used for authentication and profile info
 
 **restaurants**
 - Restaurant data with ratings and metadata
-- Foreign key to profiles (owner_id)
+- Foreign key to users (owner_id)
 - Boolean flags for wishlist and hidden status
 - Optional foreign key to groups for collaborative lists
 
 **friendships**
 - Friend connections between users
 - Status field for pending/accepted/declined requests
-- Bidirectional relationships (both users have friendship records)
+- Bidirectional relationships (both users have records)
 
 **groups** *(structure in place, feature not yet implemented)*
 - Collaborative restaurant lists
@@ -80,182 +112,159 @@ A social restaurant rating app where you and your friends can save favorites, co
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v16 or higher)
-- Supabase account
-- Foursquare API key
+- **Node.js** (v16 or higher)
+- **PostgreSQL** (v14 or higher)
+- **Foursquare API key** (free tier available)
 
 ### Installation
 
-1. **Clone the repository:**
+#### 1. Clone the repository
 ```bash
 git clone https://github.com/nmyers93/fork-n-friends.git
 cd fork-n-friends
 ```
 
-2. **Install dependencies:**
+#### 2. Set up the database
+
+**Install PostgreSQL** (if not already installed):
+- **Mac:** `brew install postgresql@14`
+- **Windows:** Download from https://www.postgresql.org/download/windows/
+- **Linux:** `sudo apt-get install postgresql`
+
+**Create database and user:**
 ```bash
+# Access PostgreSQL
+psql -U postgres
+
+# Create database
+CREATE DATABASE fork_n_friends;
+
+# Create user
+CREATE USER fork_user WITH PASSWORD 'your_password_here';
+
+# Connect to database
+\c fork_n_friends
+
+# Grant permissions
+GRANT ALL ON SCHEMA public TO fork_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO fork_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO fork_user;
+
+# Exit
+\q
+```
+
+**Run database schema:**
+```bash
+psql -U fork_user -d fork_n_friends -f server/db-setup.sql
+```
+
+#### 3. Set up the backend
+```bash
+cd server
 npm install
 ```
 
-3. **Set up environment variables:**
-
-Create a `.env` file in the root directory:
+Create `server/.env`:
 ```env
-VITE_FOURSQUARE_API_KEY=your_foursquare_api_key
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+PORT=5000
+DATABASE_URL=postgresql://fork_user:your_password_here@localhost:5432/fork_n_friends
+JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
 ```
 
-4. **Set up Supabase database:**
+**Important:** Generate a strong random string for `JWT_SECRET`.
 
-Run the following SQL in your Supabase SQL Editor:
-```sql
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- Create profiles table
-CREATE TABLE profiles (
-  id UUID PRIMARY KEY,
-  username TEXT UNIQUE NOT NULL,
-  email TEXT UNIQUE NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Create restaurants table
-CREATE TABLE restaurants (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  owner_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  group_id UUID REFERENCES groups(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  cuisine TEXT NOT NULL,
-  location TEXT NOT NULL,
-  rating INT2 DEFAULT 0 CHECK (rating >= 0 AND rating <= 5),
-  is_wishlist BOOLEAN DEFAULT FALSE,
-  is_hidden BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Create friendships table
-CREATE TABLE friendships (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  friend_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Create groups table (for future collaborative lists)
-CREATE TABLE groups (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name TEXT NOT NULL,
-  created_by UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Create group_members table
-CREATE TABLE group_members (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  can_edit BOOLEAN DEFAULT TRUE,
-  joined_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Function to auto-create profile when user signs up
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO public.profiles (id, username, email, created_at)
-  VALUES (
-    new.id,
-    COALESCE(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
-    new.email,
-    new.created_at
-  );
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Trigger to automatically create profile on signup
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-```
-
-5. **Configure Vite proxy:**
-
-The `vite.config.js` is already configured to proxy Foursquare API requests to avoid CORS issues.
-
-6. **Run the development server:**
+**Start the backend:**
 ```bash
 npm run dev
 ```
 
-7. **Open your browser:**
-Navigate to `http://localhost:5173`
+Backend should be running on `http://localhost:5000`
 
-## Project Structure
-```
-fork-n-friends/
-├── src/
-│   ├── components/
-│   │   ├── AddRestaurantForm.jsx    # Form to add restaurants
-│   │   ├── AddRestaurantForm.css
-│   │   ├── Auth.jsx                  # Login/signup component
-│   │   ├── Auth.css
-│   │   ├── Friends.jsx               # Friend management
-│   │   ├── Friends.css
-│   │   ├── RestaurantList.jsx        # Display restaurant lists
-│   │   ├── RestaurantList.css
-│   │   ├── StarRating.jsx            # Star rating component
-│   │   └── StarRating.css
-│   ├── utils/
-│   │   ├── foursquare.js             # Foursquare API integration
-│   │   └── supabaseClient.js         # Supabase client configuration
-│   ├── App.jsx                       # Main app component
-│   ├── App.css
-│   ├── main.jsx                      # App entry point
-│   └── index.css                     # Global styles
-├── .env                              # Environment variables (not committed)
-├── .gitignore
-├── package.json
-├── vite.config.js                    # Vite configuration with proxy
-└── README.md
+#### 4. Set up the frontend
+```bash
+cd ../client
+npm install
 ```
 
-## Key Features Explained
+Create `client/.env`:
+```env
+VITE_FOURSQUARE_API_KEY=your_foursquare_api_key
+```
 
-### Authentication Flow
-1. New users sign up with email, password, and username
-2. Supabase Auth handles password hashing and user creation
-3. Database trigger automatically creates profile record
-4. Users can log in and remain authenticated across sessions
+**Get a Foursquare API key:**
+1. Go to https://location.foursquare.com/developer/
+2. Create an account and new app
+3. Copy your API key
 
-### Friend System
-1. Search for users by username
-2. Send friend request (creates pending friendship)
-3. Recipient can accept (creates bidirectional friendship) or decline
-4. View friends' non-hidden restaurants grouped by friend
-5. Users can only rate/delete their own restaurants
+**Configure Vite proxy** (already set up in `vite.config.js`):
+- Proxies `/places` requests to Foursquare API
+- Avoids CORS issues in development
 
-### Restaurant Management
-1. Search Foursquare API for restaurants by name
-2. Click result to auto-populate form fields
-3. Choose between "Tried" (rated restaurants) or "Wishlist" (want to try)
-4. Restaurants stored with user ownership
-5. Can be marked as hidden from friends
+**Start the frontend:**
+```bash
+npm run dev
+```
+
+Frontend should open at `http://localhost:5173`
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/signup` - Create new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user (protected)
+
+### Restaurants
+- `GET /api/restaurants` - Get user's restaurants (protected)
+- `GET /api/restaurants/friends` - Get friends' restaurants (protected)
+- `GET /api/restaurants/:id` - Get single restaurant (protected)
+- `POST /api/restaurants` - Create restaurant (protected)
+- `PUT /api/restaurants/:id` - Update restaurant (protected)
+- `DELETE /api/restaurants/:id` - Delete restaurant (protected)
+
+### Friends
+- `GET /api/friends/search` - Search users by username (protected)
+- `GET /api/friends` - Get all friends (protected)
+- `GET /api/friends/requests` - Get pending requests (protected)
+- `POST /api/friends/request` - Send friend request (protected)
+- `PUT /api/friends/accept/:id` - Accept friend request (protected)
+- `DELETE /api/friends/decline/:id` - Decline friend request (protected)
+- `DELETE /api/friends/:id` - Unfriend user (protected)
+
+All protected routes require `Authorization: Bearer <token>` header.
 
 ## Development
 
-This project is being built incrementally as a learning exercise in React and full-stack development. Each feature is carefully implemented and committed to demonstrate organic code growth and best practices.
+### Project Structure
+
+**Frontend (`client/`):**
+- `components/` - Reusable React components
+- `services/api.js` - API service layer with auth token management
+- `utils/foursquare.js` - Foursquare API integration
+
+**Backend (`server/`):**
+- `controllers/` - Business logic and request handlers
+- `routes/` - Express route definitions
+- `middleware/auth.js` - JWT authentication middleware
+- `config/db.js` - PostgreSQL connection pool
 
 ### Development Principles
-- Component-based architecture
-- Clean separation of concerns
-- Comprehensive error handling
-- User experience focused (loading states, validation, responsive design)
-- Database-first design with proper foreign key relationships
-- Security conscious (environment variables, user ownership checks)
+- **MVC Architecture** - Separation of concerns
+- **RESTful API Design** - Standard HTTP methods and status codes
+- **JWT Authentication** - Stateless, token-based auth
+- **Secure Password Storage** - bcrypt hashing with salt
+- **Component-based Frontend** - Reusable, maintainable React components
+- **Centralized API Layer** - Single source for all backend calls
+- **Error Handling** - Comprehensive try-catch with user feedback
+- **Database Relationships** - Proper foreign keys and cascading deletes
+
+### Security Features
+- Passwords hashed with bcrypt (10 salt rounds)
+- JWT tokens with 7-day expiration
+- Protected routes require authentication
+- Users can only modify their own data
+- SQL injection prevention via parameterized queries
 
 ## Contributing
 
@@ -268,5 +277,6 @@ MIT
 ## Acknowledgments
 
 - Foursquare Places API for restaurant data
-- Supabase for backend infrastructure
+- Express.js and Node.js communities
 - React community for excellent documentation
+- PostgreSQL for robust database management

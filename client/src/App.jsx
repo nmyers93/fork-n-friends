@@ -4,114 +4,60 @@ import AddRestaurantForm from './components/AddRestaurantForm'
 import RestaurantList from './components/RestaurantList'
 import Auth from './components/Auth'
 import Friends from './components/Friends'
-import { supabase } from './utils/supabaseClient'
+import { auth, restaurants as restaurantsApi } from './services/api'
 
 function App() {
   // State management
-  const [restaurants, setRestaurants] = useState([]) // Array of restaurant objects
-  const [loading, setLoading] = useState(true) // Initial loading state
-  const [user, setUser] = useState(null) // Currently logged-in user
-  const [username, setUsername] = useState('') // User's display name
-  const [viewMode, setViewMode] = useState('my') // Toggle between 'my' and 'friends' restaurants
+  const [restaurants, setRestaurants] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(null)
+  const [viewMode, setViewMode] = useState('my')
 
   /**
-   * Check authentication state on mount and listen for auth changes
-   * This runs once when the component mounts
+   * Check if user is authenticated on mount
    */
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+    const checkAuth = async () => {
+      if (auth.isAuthenticated()) {
+        try {
+          const data = await auth.getMe()
+          setUser(data.user)
+        } catch (error) {
+          console.error('Auth check failed:', error)
+          auth.logout()
+        }
+      }
       setLoading(false)
-    })
+    }
 
-    // Listen for auth state changes (login, logout, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    // Cleanup subscription on unmount
-    return () => subscription.unsubscribe()
+    checkAuth()
   }, [])
 
   /**
-   * Fetch user data when user logs in or view mode changes
-   * Dependencies: user and viewMode
+   * Fetch restaurants when user logs in or view mode changes
    */
   useEffect(() => {
     if (user) {
-      fetchUsername()
       fetchRestaurants()
     }
   }, [user, viewMode])
 
   /**
-   * Fetch the current user's username from the profiles table
-   */
-  const fetchUsername = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', user.id)
-        .single()
-      
-      if (error) throw error
-      
-      setUsername(data.username)
-    } catch (error) {
-      console.error('Error fetching username:', error)
-    }
-  }
-
-  /**
-   * Fetch restaurants based on current view mode
-   * - 'my': Fetches user's own restaurants
-   * - 'friends': Fetches non-hidden restaurants from accepted friends
+   * Fetch restaurants based on view mode
    */
   const fetchRestaurants = async () => {
     try {
       if (viewMode === 'my') {
-        // Fetch user's own restaurants
-        const { data, error } = await supabase
-          .from('restaurants')
-          .select('*')
-          .eq('owner_id', user.id)
-          .order('created_at', { ascending: false })
-        
-        if (error) throw error
-        setRestaurants(data || [])
+        const data = await restaurantsApi.getAll()
+        setRestaurants(data.restaurants)
       } else {
-        // First, get list of friends
-        const { data: friendsData, error: friendsError } = await supabase
-          .from('friendships')
-          .select('friend_id')
-          .eq('user_id', user.id)
-          .eq('status', 'accepted')
-        
-        if (friendsError) throw friendsError
-        
-        const friendIds = friendsData.map(f => f.friend_id)
-        
-        // If no friends, show empty list
-        if (friendIds.length === 0) {
-          setRestaurants([])
-          return
-        }
-
-        // Fetch friends' non-hidden restaurants with owner info
-        const { data, error } = await supabase
-          .from('restaurants')
-          .select(`
-            *,
-            profiles:owner_id (username)
-          `)
-          .in('owner_id', friendIds)
-          .eq('is_hidden', false)
-          .order('created_at', { ascending: false })
-        
-        if (error) throw error
-        setRestaurants(data || [])
+        const data = await restaurantsApi.getFriendsRestaurants()
+        // Format friends' restaurants to include owner info in profiles object
+        const formattedRestaurants = data.restaurants.map(r => ({
+          ...r,
+          profiles: { username: r.owner_username }
+        }))
+        setRestaurants(formattedRestaurants)
       }
     } catch (error) {
       console.error('Error fetching restaurants:', error)
@@ -119,113 +65,90 @@ function App() {
   }
 
   /**
-   * Add a new restaurant to the database
-   * Only adds to local state if currently viewing "my" restaurants
-   * @param {Object} restaurant - Restaurant object with name, cuisine, location, rating, is_wishlist
+   * Handle successful authentication
+   */
+  const handleAuthSuccess = (userData) => {
+    setUser(userData)
+  }
+
+  /**
+   * Add a new restaurant
    */
   const addRestaurant = async (restaurant) => {
     try {
-      const { data, error } = await supabase
-        .from('restaurants')
-        .insert([{
-          name: restaurant.name,
-          cuisine: restaurant.cuisine,
-          location: restaurant.location,
-          rating: restaurant.rating,
-          is_wishlist: restaurant.is_wishlist,
-          is_hidden: false,
-          owner_id: user.id
-        }])
-        .select()
+      const data = await restaurantsApi.create(restaurant)
       
-      if (error) throw error
-      
-      // Only update local state if viewing own restaurants
-      if (data && viewMode === 'my') {
-        setRestaurants([data[0], ...restaurants])
+      if (viewMode === 'my') {
+        setRestaurants([data.restaurant, ...restaurants])
       }
     } catch (error) {
       console.error('Error adding restaurant:', error)
+      alert('Failed to add restaurant')
     }
   }
 
   /**
-   * Update the rating of a restaurant
-   * Users can only rate their own restaurants
-   * @param {number} index - Index of restaurant in the restaurants array
-   * @param {number} newRating - New rating value (0-5)
+   * Update restaurant rating
    */
   const updateRating = async (index, newRating) => {
     const restaurant = restaurants[index]
     
-    // Prevent rating friends' restaurants
+    // Only allow updating own restaurants
     if (restaurant.owner_id !== user.id) {
       alert("You can only rate your own restaurants!")
       return
     }
     
     try {
-      const { error } = await supabase
-        .from('restaurants')
-        .update({ rating: newRating })
-        .eq('id', restaurant.id)
+      await restaurantsApi.update(restaurant.id, { rating: newRating })
       
-      if (error) throw error
-      
-      // Update local state
       const updatedRestaurants = [...restaurants]
       updatedRestaurants[index].rating = newRating
       setRestaurants(updatedRestaurants)
     } catch (error) {
       console.error('Error updating rating:', error)
+      alert('Failed to update rating')
     }
   }
 
   /**
-   * Delete a restaurant from the database
-   * Users can only delete their own restaurants
-   * @param {number} index - Index of restaurant in the restaurants array
+   * Delete restaurant
    */
   const deleteRestaurant = async (index) => {
     const restaurant = restaurants[index]
     
-    // Prevent deleting friends' restaurants
+    // Only allow deleting own restaurants
     if (restaurant.owner_id !== user.id) {
       alert("You can only delete your own restaurants!")
       return
     }
     
     try {
-      const { error } = await supabase
-        .from('restaurants')
-        .delete()
-        .eq('id', restaurant.id)
+      await restaurantsApi.delete(restaurant.id)
       
-      if (error) throw error
-      
-      // Update local state
       const updatedRestaurants = restaurants.filter((_, i) => i !== index)
       setRestaurants(updatedRestaurants)
     } catch (error) {
       console.error('Error deleting restaurant:', error)
+      alert('Failed to delete restaurant')
     }
   }
 
   /**
-   * Sign out the current user and clear all state
+   * Sign out user
    */
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
+  const handleSignOut = () => {
+    auth.logout()
+    setUser(null)
     setRestaurants([])
-    setUsername('')
   }
 
-  // Show loading indicator while checking auth state
+  // Show loading state
   if (loading) {
     return <div className="app"><p>Loading...</p></div>
   }
 
-  // Show authentication form if user is not logged in
+  // Show auth form if not logged in
   if (!user) {
     return (
       <div className="app">
@@ -233,19 +156,18 @@ function App() {
           <h1>🍴 Fork n' Friends</h1>
           <p>Decide where to eat with your friends</p>
         </header>
-        <Auth />
+        <Auth onAuthSuccess={handleAuthSuccess} />
       </div>
     )
   }
 
-  // Main app interface for logged-in users
+  // Main app for logged-in users
   return (
     <div className="app">
       <header>
-        {/* User info and sign out button */}
         <div className="user-menu">
           <div className="user-info">
-            Logged in as <strong>{username || user.email}</strong>
+            Logged in as <strong>{user.username}</strong>
           </div>
           <button onClick={handleSignOut} className="sign-out-btn">Sign Out</button>
         </div>
@@ -253,10 +175,8 @@ function App() {
         <p>Decide where to eat with your friends</p>
       </header>
       
-      {/* Friends management section */}
       <Friends userId={user.id} />
 
-      {/* Toggle between viewing own vs friends' restaurants */}
       <div className="view-toggle">
         <button 
           className={viewMode === 'my' ? 'active' : ''}
@@ -272,10 +192,8 @@ function App() {
         </button>
       </div>
 
-      {/* Only show add form when viewing own restaurants */}
       {viewMode === 'my' && <AddRestaurantForm onAddRestaurant={addRestaurant} />}
       
-      {/* Restaurant list with ratings and delete functionality */}
       <RestaurantList 
         restaurants={restaurants} 
         onUpdateRating={updateRating}
