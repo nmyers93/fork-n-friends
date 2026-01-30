@@ -5,7 +5,8 @@
  * Automatically includes JWT token in authenticated requests
  */
 
-const API_URL = 'http://localhost:5000/api'
+// Use production URL if available, otherwise localhost for development
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 /**
  * Get authentication token from localStorage
