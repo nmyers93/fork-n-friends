@@ -18,6 +18,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./routes/auth'))
 app.use('/api/restaurants', require('./routes/restaurants'))
 app.use('/api/friends', require('./routes/friends'))
+app.use('/api/foursquare', require('./routes/foursquare'))
 
 // Start server
 app.listen(PORT, () => {
