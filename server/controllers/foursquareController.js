@@ -12,7 +12,7 @@ const searchRestaurants = async (req, res) => {
       return res.status(400).json({ error: 'Query parameter is required' })
     }
 
-    const url = `https://api.foursquare.com/v3/places/search?query=${encodeURIComponent(query)}&near=${encodeURIComponent(location)}&categories=13000`
+    const url = `https://places-api.foursquare.com/places/search?query=${encodeURIComponent(query)}&near=${encodeURIComponent(location)}&categories=13000`
 
     const response = await fetch(url, {
       headers: {
