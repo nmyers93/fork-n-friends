@@ -12,22 +12,15 @@ const searchRestaurants = async (req, res) => {
       return res.status(400).json({ error: 'Query parameter is required' })
     }
 
-    // Debug logging
-    console.log('Foursquare API Key exists:', !!process.env.FOURSQUARE_API_KEY)
-    console.log('Search query:', query, 'Location:', location)
-
-    const url = `https://places-api.foursquare.com/places/search?query=${encodeURIComponent(query)}&near=${encodeURIComponent(location)}&categories=13000`
-
-    console.log('Calling Foursquare URL:', url)
+    const url = `https://api.foursquare.com/v3/places/search?query=${encodeURIComponent(query)}&near=${encodeURIComponent(location)}&categories=13000`
 
     const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${process.env.FOURSQUARE_API_KEY}`,
         'Accept': 'application/json',
+        'X-Places-Api-Version': '2025-06-17'
       }
     })
-
-    console.log('Foursquare response status:', response.status)
 
     if (!response.ok) {
       const errorData = await response.text()
@@ -36,7 +29,6 @@ const searchRestaurants = async (req, res) => {
     }
 
     const data = await response.json()
-    console.log('Foursquare results count:', data.results?.length || 0)
     res.json({ results: data.results || [] })
   } catch (error) {
     console.error('Foursquare search error:', error)
