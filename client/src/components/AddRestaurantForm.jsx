@@ -38,8 +38,8 @@ function AddRestaurantForm({ onAddRestaurant }) {
   const handleSearch = async () => {
   if (searchQuery.trim()) {
     try {
-      const data = await foursquare.search(searchQuery)
-      setSearchResults(data.results || [])
+      const results = await foursquare.search(searchQuery)
+      setSearchResults(results)
     } catch (error) {
       console.error('Search error:', error)
       setSearchResults([])

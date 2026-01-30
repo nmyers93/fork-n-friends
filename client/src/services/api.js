@@ -233,12 +233,15 @@ export const friends = {
 
 // ==================== FOURSQUARE API ====================
 
+// ==================== FOURSQUARE API ====================
+
 export const foursquare = {
   /**
    * Search for restaurants via backend proxy
    */
-  search: async (query, location = 'New York') => {
-    return await authRequest(`/foursquare/search?query=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}`)
+  search: async (query, location = 'Chicago') => {
+    const data = await authRequest(`/foursquare/search?query=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}`)
+    return data.results || []
   }
 }
 
