@@ -2,6 +2,17 @@
 
 A full-stack social restaurant rating app where you and your friends can save favorites, compare restaurants, and randomly decide where to eat.
 
+## 🌐 Live Demo
+
+**Try it now:** [https://fork-n-friends.vercel.app](https://fork-n-friends.vercel.app/)
+
+The application is fully deployed and accessible on the web!
+- Frontend hosted on Vercel
+- Backend API hosted on Railway
+- PostgreSQL database on Railway
+
+---
+
 ## Features
 
 ### Current Features ✅
@@ -12,7 +23,7 @@ A full-stack social restaurant rating app where you and your friends can save fa
 - **Session Management** - Persistent login with token-based auth
 
 #### Restaurant Management
-- **Search Integration** - Search for restaurants via Foursquare Places API
+- **Search Integration** - Search for restaurants via Foursquare Places API with location
 - **Manual Entry** - Add restaurants manually with name, cuisine, and location
 - **Auto-populate** - Click search results to auto-fill restaurant details
 - **Star Ratings** - 5-star rating system for each restaurant (0-5 stars)
@@ -33,6 +44,7 @@ A full-stack social restaurant rating app where you and your friends can save fa
 - **Form Validation** - Ensures all required fields are filled before submission
 - **Error Messages** - Clear feedback for validation errors
 - **Search on Enter** - Press Enter key to search without clicking button
+- **Location-based Search** - Specify city/location for restaurant searches
 
 ### Planned Features 🚧
 - Random restaurant picker for decision-making
@@ -59,6 +71,11 @@ A full-stack social restaurant rating app where you and your friends can save fa
 
 ### External APIs
 - **Foursquare Places API** - Restaurant search and data
+
+### Deployment
+- **Vercel** - Frontend hosting with automatic deployments
+- **Railway** - Backend API and PostgreSQL database hosting
+- **GitHub** - Source control with CI/CD integration
 
 ## Architecture
 
@@ -233,6 +250,31 @@ Frontend should open at `http://localhost:5173`
 - `DELETE /api/friends/:id` - Unfriend user (protected)
 
 All protected routes require `Authorization: Bearer <token>` header.
+
+## Deployment
+
+The application is deployed and accessible at: **[[Fork n' Friends](https://fork-n-friends.vercel.app/)]**
+
+### Deployment Architecture
+- **Frontend (Vercel):** Automatically deploys from `main` branch
+- **Backend (Railway):** Automatically deploys from `main` branch
+- **Database (Railway):** PostgreSQL instance managed by Railway
+
+### Environment Variables Required
+
+**Backend (Railway):**
+```
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+JWT_SECRET=your_secure_random_string
+FOURSQUARE_API_KEY=your_foursquare_api_key
+PORT=5000
+```
+
+**Frontend (Vercel):**
+```
+VITE_API_URL=https://your-railway-backend-url.railway.app/api
+VITE_FOURSQUARE_API_KEY=your_foursquare_api_key
+```
 
 ## Development
 

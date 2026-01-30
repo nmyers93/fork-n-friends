@@ -14,6 +14,7 @@ import { foursquare } from '../services/api'
  * - Auto-populate from API search results
  * - Wishlist toggle (tried vs want-to-try)
  * - Enter key support for search
+ * - Location-based search
  * 
  * @param {Function} onAddRestaurant - Callback to add restaurant to database
  */
@@ -25,6 +26,7 @@ function AddRestaurantForm({ onAddRestaurant }) {
   
   // Search functionality states
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchLocation, setSearchLocation] = useState('New York') // Default search location
   const [searchResults, setSearchResults] = useState([])
   
   // Validation and wishlist states
@@ -36,16 +38,16 @@ function AddRestaurantForm({ onAddRestaurant }) {
    * Triggered by search button or Enter key
    */
   const handleSearch = async () => {
-  if (searchQuery.trim()) {
-    try {
-      const results = await foursquare.search(searchQuery)
-      setSearchResults(results)
-    } catch (error) {
-      console.error('Search error:', error)
-      setSearchResults([])
+    if (searchQuery.trim()) {
+      try {
+        const results = await foursquare.search(searchQuery, searchLocation)
+        setSearchResults(results)
+      } catch (error) {
+        console.error('Search error:', error)
+        setSearchResults([])
+      }
     }
   }
-}
 
   /**
    * Auto-populate form fields when user selects a search result
@@ -133,6 +135,19 @@ function AddRestaurantForm({ onAddRestaurant }) {
           placeholder="Search for a restaurant..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => {
+            // Allow Enter key to trigger search
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              handleSearch()
+            }
+          }}
+        />
+        <input 
+          type="text"
+          placeholder="Location (e.g., Chicago, IL)"
+          value={searchLocation}
+          onChange={(e) => setSearchLocation(e.target.value)}
           onKeyDown={(e) => {
             // Allow Enter key to trigger search
             if (e.key === 'Enter') {
