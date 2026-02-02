@@ -233,8 +233,6 @@ export const friends = {
 
 // ==================== FOURSQUARE API ====================
 
-// ==================== FOURSQUARE API ====================
-
 export const foursquare = {
   /**
    * Search for restaurants via backend proxy
@@ -245,9 +243,105 @@ export const foursquare = {
   }
 }
 
+// ==================== GROUPS API ====================
+
+export const groups = {
+  /**
+   * Create a new group
+   */
+  create: async (name) => {
+    return await authRequest('/groups', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    })
+  },
+
+  /**
+   * Get all user's groups
+   */
+  getAll: async () => {
+    return await authRequest('/groups')
+  },
+
+  /**
+   * Get single group with members and restaurants
+   */
+  getOne: async (id) => {
+    return await authRequest(`/groups/${id}`)
+  },
+
+  /**
+   * Update group name
+   */
+  update: async (id, name) => {
+    return await authRequest(`/groups/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name }),
+    })
+  },
+
+  /**
+   * Delete a group
+   */
+  delete: async (id) => {
+    return await authRequest(`/groups/${id}`, {
+      method: 'DELETE',
+    })
+  },
+
+  /**
+   * Add a member to a group
+   */
+  addMember: async (groupId, userId) => {
+    return await authRequest(`/groups/${groupId}/members`, {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId }),
+    })
+  },
+
+  /**
+   * Remove a member from a group
+   */
+  removeMember: async (groupId, memberId) => {
+    return await authRequest(`/groups/${groupId}/members/${memberId}`, {
+      method: 'DELETE',
+    })
+  },
+
+  /**
+   * Update member permissions
+   */
+  updateMemberPermissions: async (groupId, memberId, canEdit) => {
+    return await authRequest(`/groups/${groupId}/members/${memberId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ can_edit: canEdit }),
+    })
+  },
+
+  /**
+   * Add restaurant to group
+   */
+  addRestaurant: async (groupId, restaurant) => {
+    return await authRequest(`/groups/${groupId}/restaurants`, {
+      method: 'POST',
+      body: JSON.stringify(restaurant),
+    })
+  },
+
+  /**
+   * Remove restaurant from group
+   */
+  removeRestaurant: async (groupId, restaurantId) => {
+    return await authRequest(`/groups/${groupId}/restaurants/${restaurantId}`, {
+      method: 'DELETE',
+    })
+  },
+}
+
 export default {
   auth,
   restaurants,
   friends,
-  foursquare
+  foursquare,
+  groups
 }
