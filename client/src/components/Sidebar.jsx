@@ -24,8 +24,11 @@ function Sidebar({ user, onSignOut }) {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button className="mobile-menu-btn" onClick={toggleSidebar}>
+      {/* Mobile menu button - hide when sidebar is open */}
+      <button 
+        className={`mobile-menu-btn ${isOpen ? 'hidden' : ''}`}
+        onClick={toggleSidebar}
+      >
         ☰
       </button>
 

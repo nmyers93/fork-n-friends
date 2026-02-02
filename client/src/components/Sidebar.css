@@ -3,7 +3,7 @@
   display: none;
   position: fixed;
   top: 1rem;
-  left: 1rem;
+  right: 1rem; /* Changed from left to right */
   z-index: 1001;
   background: #4CAF50;
   color: white;
@@ -13,10 +13,17 @@
   font-size: 1.5rem;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: opacity 0.3s ease;
 }
 
 .mobile-menu-btn:hover {
   background: #45a049;
+}
+
+/* Hide button when sidebar is open */
+.mobile-menu-btn.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Sidebar overlay for mobile */
@@ -78,6 +85,7 @@
 .sidebar-user .user-email {
   color: #666;
   font-size: 0.85rem;
+  word-break: break-word; /* Prevent email overflow */
 }
 
 /* Navigation */
