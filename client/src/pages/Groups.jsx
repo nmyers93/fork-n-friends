@@ -189,6 +189,23 @@ function Groups({ user }) {
     }
   }
 
+  // Update rating of a restaurant in the group
+  const handleUpdateRating = async (restaurantId, newRating) => {
+    try {
+      await groupsApi.updateRestaurantRating(selectedGroup.id, restaurantId, newRating)
+      // Update local state to reflect the change
+      setGroupDetail(prev => ({
+        ...prev,
+        restaurants: prev.restaurants.map(r =>
+          r.id === restaurantId ? { ...r, rating: newRating } : r
+        )
+      }))
+    } catch (error) {
+      console.error('Error updating rating:', error)
+      alert(error.message || 'Failed to update rating')
+    }
+  }
+
   if (loading) {
     return (
       <div className="page">
@@ -313,7 +330,7 @@ function Groups({ user }) {
                       <p className="restaurant-location">{restaurant.location}</p>
                       <span className="owner-tag">Added by @{restaurant.owner_username}</span>
                     </div>
-                    <StarRating rating={restaurant.rating} onRatingChange={() => {}} />
+                    <StarRating rating={restaurant.rating} onRatingChange={(newRating) => handleUpdateRating(restaurant.id, newRating)} />
                   </div>
                   {canEdit && (
                     <button className="delete-btn" onClick={() => handleRemoveRestaurant(restaurant.id)}>

@@ -13,6 +13,7 @@ const {
   getInvites,
   addRestaurantToGroup,
   removeRestaurantFromGroup,
+  updateGroupRestaurantRating,
   updateMemberPermissions
 } = require('../controllers/groupController')
 const auth = require('../middleware/auth')
@@ -51,6 +52,7 @@ router.put('/:id/members/:memberId', auth, updateMemberPermissions)
 router.delete('/:id/members/:memberId', auth, removeMember)
 
 router.post('/:id/restaurants', auth, addRestaurantToGroup)
+router.put('/:id/restaurants/:restaurantId', auth, updateGroupRestaurantRating)
 router.delete('/:id/restaurants/:restaurantId', auth, removeRestaurantFromGroup)
 
 module.exports = router

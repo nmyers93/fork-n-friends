@@ -510,6 +510,55 @@ const updateMemberPermissions = async (req, res) => {
   }
 }
 
+/**
+ * Update rating of a restaurant in a group
+ * PUT /api/groups/:id/restaurants/:restaurantId
+ */
+const updateGroupRestaurantRating = async (req, res) => {
+  try {
+    const { id, restaurantId } = req.params
+    const { rating } = req.body
+
+    // Check if user is an accepted member
+    const memberCheck = await pool.query(
+      `SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2 AND status = 'accepted'`,
+      [id, req.user.id]
+    )
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'You are not a member of this group' })
+    }
+
+    // Validate rating
+    if (rating === undefined || rating < 0 || rating > 5) {
+      return res.status(400).json({ error: 'Rating must be between 0 and 5' })
+    }
+
+    // Check restaurant exists and belongs to this group
+    const restaurantCheck = await pool.query(
+      `SELECT * FROM restaurants WHERE id = $1 AND group_id = $2`,
+      [restaurantId, id]
+    )
+
+    if (restaurantCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Restaurant not found in this group' })
+    }
+
+    const result = await pool.query(
+      `UPDATE restaurants SET rating = $1 WHERE id = $2 RETURNING *`,
+      [rating, restaurantId]
+    )
+
+    res.json({
+      message: 'Rating updated successfully',
+      restaurant: result.rows[0]
+    })
+  } catch (error) {
+    console.error('Update group restaurant rating error:', error)
+    res.status(500).json({ error: 'Server error updating rating' })
+  }
+}
+
 module.exports = {
   createGroup,
   getGroups,
@@ -523,5 +572,6 @@ module.exports = {
   getInvites,
   addRestaurantToGroup,
   removeRestaurantFromGroup,
+  updateGroupRestaurantRating,
   updateMemberPermissions
 }

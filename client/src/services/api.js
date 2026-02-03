@@ -354,6 +354,16 @@ export const groups = {
   },
 
   /**
+   * Update rating of a restaurant in a group
+   */
+  updateRestaurantRating: async (groupId, restaurantId, rating) => {
+    return await authRequest(`/groups/${groupId}/restaurants/${restaurantId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ rating }),
+    })
+  },
+
+  /**
    * Remove restaurant from group
    */
   removeRestaurant: async (groupId, restaurantId) => {
