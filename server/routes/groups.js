@@ -14,6 +14,7 @@ const {
   addRestaurantToGroup,
   removeRestaurantFromGroup,
   updateGroupRestaurantRating,
+  importRestaurants,
   updateMemberPermissions
 } = require('../controllers/groupController')
 const auth = require('../middleware/auth')

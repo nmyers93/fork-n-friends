@@ -559,6 +559,65 @@ const updateGroupRestaurantRating = async (req, res) => {
   }
 }
 
+/**
+ * Bulk import restaurants from user's personal list to a group
+ * POST /api/groups/:id/restaurants/import
+ */
+const importRestaurants = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { restaurant_ids } = req.body
+
+    // Check if user is an accepted member with edit permissions
+    const memberCheck = await pool.query(
+      `SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2 AND status = 'accepted'`,
+      [id, req.user.id]
+    )
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'You are not a member of this group' })
+    }
+
+    if (!memberCheck.rows[0].can_edit) {
+      return res.status(403).json({ error: 'You do not have permission to add restaurants to this group' })
+    }
+
+    if (!restaurant_ids || !Array.isArray(restaurant_ids) || restaurant_ids.length === 0) {
+      return res.status(400).json({ error: 'At least one restaurant ID is required' })
+    }
+
+    // Verify all restaurants belong to the current user
+    const restaurantsCheck = await pool.query(
+      `SELECT * FROM restaurants WHERE id = ANY($1) AND owner_id = $2 AND group_id IS NULL`,
+      [restaurant_ids, req.user.id]
+    )
+
+    if (restaurantsCheck.rows.length === 0) {
+      return res.status(400).json({ error: 'No valid restaurants found to import' })
+    }
+
+    // Create copies of the selected restaurants in the group
+    const importedRestaurants = []
+    for (const restaurant of restaurantsCheck.rows) {
+      const result = await pool.query(
+        `INSERT INTO restaurants (owner_id, group_id, name, cuisine, location, rating, is_wishlist, is_hidden)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *`,
+        [req.user.id, id, restaurant.name, restaurant.cuisine, restaurant.location, restaurant.rating, restaurant.is_wishlist, false]
+      )
+      importedRestaurants.push(result.rows[0])
+    }
+
+    res.status(201).json({
+      message: `Successfully imported ${importedRestaurants.length} restaurants`,
+      restaurants: importedRestaurants
+    })
+  } catch (error) {
+    console.error('Import restaurants error:', error)
+    res.status(500).json({ error: 'Server error importing restaurants' })
+  }
+}
+
 module.exports = {
   createGroup,
   getGroups,
@@ -573,5 +632,6 @@ module.exports = {
   addRestaurantToGroup,
   removeRestaurantFromGroup,
   updateGroupRestaurantRating,
+  importRestaurants,
   updateMemberPermissions
 }

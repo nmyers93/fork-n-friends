@@ -364,6 +364,16 @@ export const groups = {
   },
 
   /**
+   * Bulk import restaurants from user's personal list
+   */
+  importRestaurants: async (groupId, restaurantIds) => {
+    return await authRequest(`/groups/${groupId}/restaurants/import`, {
+      method: 'POST',
+      body: JSON.stringify({ restaurant_ids: restaurantIds }),
+    })
+  },
+
+  /**
    * Remove restaurant from group
    */
   removeRestaurant: async (groupId, restaurantId) => {

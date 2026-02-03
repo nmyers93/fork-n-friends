@@ -481,6 +481,11 @@
   background-color: #e68a00;
 }
 
+.restaurant-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 /* Mobile responsive for invites */
 @media (max-width: 768px) {
   .invite-item {

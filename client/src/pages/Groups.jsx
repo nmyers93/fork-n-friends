@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { groups as groupsApi, friends as friendsApi } from '../services/api'
 import AddRestaurantForm from '../components/AddRestaurantForm'
 import StarRating from '../components/StarRating'
+import ImportRestaurants from '../components/ImportRestaurants'
 import './Pages.css'
 
 /**
@@ -25,6 +26,7 @@ function Groups({ user }) {
   const [friends, setFriends] = useState([])
   const [showAddMember, setShowAddMember] = useState(false)
   const [showAddRestaurant, setShowAddRestaurant] = useState(false)
+  const [showImport, setShowImport] = useState(false)
 
   useEffect(() => {
     fetchGroups()
@@ -206,6 +208,18 @@ function Groups({ user }) {
     }
   }
 
+  // Import restaurants from personal list
+  const handleImport = async (restaurantIds) => {
+    try {
+      await groupsApi.importRestaurants(selectedGroup.id, restaurantIds)
+      setShowImport(false)
+      fetchGroupDetail(selectedGroup.id)
+    } catch (error) {
+      console.error('Error importing restaurants:', error)
+      alert(error.message || 'Failed to import restaurants')
+    }
+  }
+
   if (loading) {
     return (
       <div className="page">
@@ -306,9 +320,14 @@ function Groups({ user }) {
           <div className="group-section-header">
             <h2>🍽️ Restaurants ({groupDetail.restaurants.length})</h2>
             {canEdit && (
-              <button className="add-btn" onClick={() => setShowAddRestaurant(!showAddRestaurant)}>
-                {showAddRestaurant ? 'Cancel' : '+ Add Restaurant'}
-              </button>
+              <div className="restaurant-actions">
+                <button className="add-btn" onClick={() => setShowImport(true)}>
+                  📥 Import
+                </button>
+                <button className="add-btn" onClick={() => setShowAddRestaurant(!showAddRestaurant)}>
+                  {showAddRestaurant ? 'Cancel' : '+ Add'}
+                </button>
+              </div>
             )}
           </div>
 
@@ -342,6 +361,14 @@ function Groups({ user }) {
             </div>
           )}
         </div>
+        {/* Import modal */}
+        {showImport && (
+          <ImportRestaurants
+            onImport={handleImport}
+            onClose={() => setShowImport(false)}
+            existingGroupRestaurants={groupDetail.restaurants}
+          />
+        )}
       </div>
     )
   }
