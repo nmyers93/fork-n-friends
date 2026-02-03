@@ -39,6 +39,7 @@ const auth = require('../middleware/auth')
  * DELETE /api/groups/:id/restaurants/:restaurantId - Remove restaurant
  */
 
+// Groups routes must be in specific order - more specific routes first
 router.post('/', auth, createGroup)
 router.get('/', auth, getGroups)
 router.get('/invites', auth, getInvites) // Must be before /:id
@@ -52,6 +53,7 @@ router.put('/:id/members/decline', auth, declineInvite) // Must be before /:memb
 router.put('/:id/members/:memberId', auth, updateMemberPermissions)
 router.delete('/:id/members/:memberId', auth, removeMember)
 
+router.post('/:id/restaurants/import', auth, importRestaurants) // Must be before /:restaurantId
 router.post('/:id/restaurants', auth, addRestaurantToGroup)
 router.put('/:id/restaurants/:restaurantId', auth, updateGroupRestaurantRating)
 router.delete('/:id/restaurants/:restaurantId', auth, removeRestaurantFromGroup)
