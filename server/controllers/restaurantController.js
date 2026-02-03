@@ -1,13 +1,13 @@
 const pool = require('../config/db')
 
 /**
- * Get all restaurants for the current user
+ * Get all restaurants for the current user (personal only, not in groups)
  * GET /api/restaurants
  */
 const getRestaurants = async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM restaurants WHERE owner_id = $1 ORDER BY created_at DESC',
+      'SELECT * FROM restaurants WHERE owner_id = $1 AND group_id IS NULL ORDER BY created_at DESC',
       [req.user.id]
     )
 
