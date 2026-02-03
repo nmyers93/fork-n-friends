@@ -264,6 +264,13 @@ export const groups = {
   },
 
   /**
+   * Get pending group invites
+   */
+  getInvites: async () => {
+    return await authRequest('/groups/invites')
+  },
+
+  /**
    * Get single group with members and restaurants
    */
   getOne: async (id) => {
@@ -290,12 +297,30 @@ export const groups = {
   },
 
   /**
-   * Add a member to a group
+   * Send invite to a user
    */
-  addMember: async (groupId, userId) => {
+  sendInvite: async (groupId, userId) => {
     return await authRequest(`/groups/${groupId}/members`, {
       method: 'POST',
       body: JSON.stringify({ user_id: userId }),
+    })
+  },
+
+  /**
+   * Accept a group invite
+   */
+  acceptInvite: async (groupId) => {
+    return await authRequest(`/groups/${groupId}/members/accept`, {
+      method: 'PUT',
+    })
+  },
+
+  /**
+   * Decline a group invite
+   */
+  declineInvite: async (groupId) => {
+    return await authRequest(`/groups/${groupId}/members/decline`, {
+      method: 'PUT',
     })
   },
 

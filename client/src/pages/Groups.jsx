@@ -10,12 +10,14 @@ import './Pages.css'
  * Create and manage collaborative restaurant lists
  * Features:
  * - Create/delete groups
- * - Add/remove members (search from friends)
+ * - Send/accept/decline group invites
+ * - Add/remove members
  * - Add/remove restaurants
  * - Toggle member edit permissions
  */
 function Groups({ user }) {
   const [groups, setGroups] = useState([])
+  const [invites, setInvites] = useState([])
   const [selectedGroup, setSelectedGroup] = useState(null)
   const [groupDetail, setGroupDetail] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -26,10 +28,10 @@ function Groups({ user }) {
 
   useEffect(() => {
     fetchGroups()
+    fetchInvites()
     fetchFriends()
   }, [])
 
-  // Fetch group detail when selectedGroup changes
   useEffect(() => {
     if (selectedGroup) {
       fetchGroupDetail(selectedGroup.id)
@@ -44,6 +46,15 @@ function Groups({ user }) {
       console.error('Error fetching groups:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchInvites = async () => {
+    try {
+      const data = await groupsApi.getInvites()
+      setInvites(data.invites)
+    } catch (error) {
+      console.error('Error fetching invites:', error)
     }
   }
 
@@ -94,15 +105,38 @@ function Groups({ user }) {
     }
   }
 
-  // Add a member to the group
-  const handleAddMember = async (friendId) => {
+  // Accept a group invite
+  const handleAcceptInvite = async (groupId) => {
     try {
-      await groupsApi.addMember(selectedGroup.id, friendId)
+      await groupsApi.acceptInvite(groupId)
+      fetchInvites()
+      fetchGroups()
+    } catch (error) {
+      console.error('Error accepting invite:', error)
+      alert(error.message || 'Failed to accept invite')
+    }
+  }
+
+  // Decline a group invite
+  const handleDeclineInvite = async (groupId) => {
+    try {
+      await groupsApi.declineInvite(groupId)
+      fetchInvites()
+    } catch (error) {
+      console.error('Error declining invite:', error)
+      alert(error.message || 'Failed to decline invite')
+    }
+  }
+
+  // Send invite to a friend
+  const handleSendInvite = async (friendId) => {
+    try {
+      await groupsApi.sendInvite(selectedGroup.id, friendId)
       setShowAddMember(false)
       fetchGroupDetail(selectedGroup.id)
     } catch (error) {
-      console.error('Error adding member:', error)
-      alert(error.message || 'Failed to add member')
+      console.error('Error sending invite:', error)
+      alert(error.message || 'Failed to send invite')
     }
   }
 
@@ -169,7 +203,7 @@ function Groups({ user }) {
     const currentMember = groupDetail.members.find(m => m.user_id === user.id)
     const canEdit = currentMember?.can_edit
 
-    // Filter out friends already in the group for "add member" list
+    // Filter out friends already in the group
     const availableFriends = friends.filter(
       f => !groupDetail.members.find(m => m.user_id === f.friend_id)
     )
@@ -197,23 +231,23 @@ function Groups({ user }) {
             <h2>👥 Members ({groupDetail.members.length})</h2>
             {isCreator && availableFriends.length > 0 && (
               <button className="add-btn" onClick={() => setShowAddMember(!showAddMember)}>
-                {showAddMember ? 'Cancel' : '+ Add Member'}
+                {showAddMember ? 'Cancel' : '+ Invite Member'}
               </button>
             )}
           </div>
 
-          {/* Add member dropdown */}
+          {/* Invite member dropdown */}
           {showAddMember && (
             <div className="add-member-list">
-              <h3>Select a friend:</h3>
+              <h3>Select a friend to invite:</h3>
               {availableFriends.length === 0 ? (
-                <p className="empty-message">No friends available to add</p>
+                <p className="empty-message">No friends available to invite</p>
               ) : (
                 availableFriends.map((friend) => (
                   <div key={friend.friend_id} className="member-item">
                     <span><strong>{friend.username}</strong></span>
-                    <button className="add-btn" onClick={() => handleAddMember(friend.friend_id)}>
-                      Add
+                    <button className="add-btn" onClick={() => handleSendInvite(friend.friend_id)}>
+                      Send Invite
                     </button>
                   </div>
                 ))
@@ -233,6 +267,7 @@ function Groups({ user }) {
                 </div>
                 {isCreator && member.user_id !== user.id && (
                   <div className="member-actions">
+                    <span className="permissions-label">Permissions:</span>
                     <button
                       className={member.can_edit ? 'permission-btn active' : 'permission-btn'}
                       onClick={() => handleTogglePermissions(member.id, member.can_edit)}
@@ -260,12 +295,10 @@ function Groups({ user }) {
             )}
           </div>
 
-          {/* Add restaurant form */}
           {showAddRestaurant && (
             <AddRestaurantForm onAddRestaurant={handleAddRestaurant} />
           )}
 
-          {/* Restaurants list */}
           {groupDetail.restaurants.length === 0 ? (
             <div className="empty-state">
               <p>{canEdit ? 'No restaurants yet. Add one above!' : 'No restaurants in this group yet.'}</p>
@@ -303,6 +336,31 @@ function Groups({ user }) {
         <h1>Groups</h1>
         <p>Collaborative restaurant lists with friends</p>
       </div>
+
+      {/* Pending invites section */}
+      {invites.length > 0 && (
+        <div className="group-section invites-section">
+          <div className="group-section-header">
+            <h2>📬 Pending Invites ({invites.length})</h2>
+          </div>
+          {invites.map((invite) => (
+            <div key={invite.group_id} className="invite-item">
+              <div className="invite-info">
+                <strong>{invite.group_name}</strong>
+                <span>Invited by @{invite.creator_username}</span>
+              </div>
+              <div className="invite-actions">
+                <button className="add-btn" onClick={() => handleAcceptInvite(invite.group_id)}>
+                  Accept
+                </button>
+                <button className="decline-btn" onClick={() => handleDeclineInvite(invite.group_id)}>
+                  Decline
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Create group form */}
       <div className="create-group-form">

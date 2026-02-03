@@ -22,11 +22,11 @@ const createGroup = async (req, res) => {
 
     const group = groupResult.rows[0]
 
-    // Automatically add creator as a member
+    // Automatically add creator as accepted member
     await pool.query(
-      `INSERT INTO group_members (group_id, user_id, can_edit)
-       VALUES ($1, $2, $3)`,
-      [group.id, req.user.id, true]
+      `INSERT INTO group_members (group_id, user_id, can_edit, status)
+       VALUES ($1, $2, $3, $4)`,
+      [group.id, req.user.id, true, 'accepted']
     )
 
     res.status(201).json({
@@ -40,7 +40,7 @@ const createGroup = async (req, res) => {
 }
 
 /**
- * Get all groups the user is a member of
+ * Get all groups the user is a member of (accepted only)
  * GET /api/groups
  */
 const getGroups = async (req, res) => {
@@ -49,11 +49,11 @@ const getGroups = async (req, res) => {
       `SELECT g.*, 
               gm.can_edit,
               u.username as creator_username,
-              (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) as member_count
+              (SELECT COUNT(*) FROM group_members WHERE group_id = g.id AND status = 'accepted') as member_count
        FROM groups g
        JOIN group_members gm ON g.id = gm.group_id
        JOIN users u ON g.created_by = u.id
-       WHERE gm.user_id = $1
+       WHERE gm.user_id = $1 AND gm.status = 'accepted'
        ORDER BY g.created_at DESC`,
       [req.user.id]
     )
@@ -73,9 +73,9 @@ const getGroup = async (req, res) => {
   try {
     const { id } = req.params
 
-    // Check if user is a member of the group
+    // Check if user is an accepted member of the group
     const memberCheck = await pool.query(
-      `SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2`,
+      `SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2 AND status = 'accepted'`,
       [id, req.user.id]
     )
 
@@ -96,12 +96,12 @@ const getGroup = async (req, res) => {
       return res.status(404).json({ error: 'Group not found' })
     }
 
-    // Get group members
+    // Get accepted group members only
     const membersResult = await pool.query(
       `SELECT gm.*, u.username, u.email
        FROM group_members gm
        JOIN users u ON gm.user_id = u.id
-       WHERE gm.group_id = $1
+       WHERE gm.group_id = $1 AND gm.status = 'accepted'
        ORDER BY gm.joined_at ASC`,
       [id]
     )
@@ -194,7 +194,7 @@ const deleteGroup = async (req, res) => {
 }
 
 /**
- * Add a member to the group
+ * Send an invite to a user (add as pending member)
  * POST /api/groups/:id/members
  */
 const addMember = async (req, res) => {
@@ -202,14 +202,14 @@ const addMember = async (req, res) => {
     const { id } = req.params
     const { user_id } = req.body
 
-    // Only group creator can add members
+    // Only group creator can send invites
     const groupCheck = await pool.query(
       `SELECT * FROM groups WHERE id = $1 AND created_by = $2`,
       [id, req.user.id]
     )
 
     if (groupCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'Only the group creator can add members' })
+      return res.status(403).json({ error: 'Only the group creator can invite members' })
     }
 
     if (!user_id) {
@@ -226,30 +226,119 @@ const addMember = async (req, res) => {
       return res.status(404).json({ error: 'User not found' })
     }
 
-    // Check if user is already a member
+    // Check if user already has a pending or accepted invite
     const alreadyMember = await pool.query(
-      `SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2`,
+      `SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2 AND status IN ('pending', 'accepted')`,
       [id, user_id]
     )
 
     if (alreadyMember.rows.length > 0) {
-      return res.status(400).json({ error: 'User is already a member of this group' })
+      const status = alreadyMember.rows[0].status
+      return res.status(400).json({ 
+        error: status === 'pending' 
+          ? 'Invite already sent to this user' 
+          : 'User is already a member of this group' 
+      })
     }
 
+    // Create pending invite
     const result = await pool.query(
-      `INSERT INTO group_members (group_id, user_id, can_edit)
-       VALUES ($1, $2, $3)
+      `INSERT INTO group_members (group_id, user_id, can_edit, status)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [id, user_id, false] // New members default to no edit permissions
+      [id, user_id, false, 'pending']
     )
 
     res.status(201).json({
-      message: 'Member added successfully',
+      message: 'Invite sent successfully',
       member: result.rows[0]
     })
   } catch (error) {
     console.error('Add member error:', error)
-    res.status(500).json({ error: 'Server error adding member' })
+    res.status(500).json({ error: 'Server error sending invite' })
+  }
+}
+
+/**
+ * Accept a group invite
+ * PUT /api/groups/:id/members/accept
+ */
+const acceptInvite = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    // Find the pending invite for this user
+    const inviteCheck = await pool.query(
+      `SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2 AND status = 'pending'`,
+      [id, req.user.id]
+    )
+
+    if (inviteCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Invite not found' })
+    }
+
+    await pool.query(
+      `UPDATE group_members SET status = 'accepted' WHERE group_id = $1 AND user_id = $2`,
+      [id, req.user.id]
+    )
+
+    res.json({ message: 'Group invite accepted!' })
+  } catch (error) {
+    console.error('Accept invite error:', error)
+    res.status(500).json({ error: 'Server error accepting invite' })
+  }
+}
+
+/**
+ * Decline a group invite
+ * PUT /api/groups/:id/members/decline
+ */
+const declineInvite = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    // Find the pending invite for this user
+    const inviteCheck = await pool.query(
+      `SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2 AND status = 'pending'`,
+      [id, req.user.id]
+    )
+
+    if (inviteCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Invite not found' })
+    }
+
+    await pool.query(
+      `UPDATE group_members SET status = 'declined' WHERE group_id = $1 AND user_id = $2`,
+      [id, req.user.id]
+    )
+
+    res.json({ message: 'Group invite declined' })
+  } catch (error) {
+    console.error('Decline invite error:', error)
+    res.status(500).json({ error: 'Server error declining invite' })
+  }
+}
+
+/**
+ * Get all pending group invites for the current user
+ * GET /api/groups/invites
+ */
+const getInvites = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT gm.*, g.name as group_name, u.username as creator_username
+       FROM group_members gm
+       JOIN groups g ON gm.group_id = g.id
+       JOIN users u ON g.created_by = u.id
+       WHERE gm.user_id = $1 AND gm.status = 'pending'
+       ORDER BY gm.joined_at DESC`,
+      [req.user.id]
+    )
+
+    res.json({ invites: result.rows })
+  } catch (error) {
+    console.error('Get invites error:', error)
+    res.status(500).json({ error: 'Server error fetching invites' })
   }
 }
 
@@ -302,9 +391,9 @@ const addRestaurantToGroup = async (req, res) => {
     const { id } = req.params
     const { name, cuisine, location, rating = 0, is_wishlist = false } = req.body
 
-    // Check if user is a member with edit permissions
+    // Check if user is an accepted member with edit permissions
     const memberCheck = await pool.query(
-      `SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2`,
+      `SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2 AND status = 'accepted'`,
       [id, req.user.id]
     )
 
@@ -346,9 +435,9 @@ const removeRestaurantFromGroup = async (req, res) => {
   try {
     const { id, restaurantId } = req.params
 
-    // Check if user is a member with edit permissions
+    // Check if user is an accepted member with edit permissions
     const memberCheck = await pool.query(
-      `SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2`,
+      `SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2 AND status = 'accepted'`,
       [id, req.user.id]
     )
 
@@ -429,6 +518,9 @@ module.exports = {
   deleteGroup,
   addMember,
   removeMember,
+  acceptInvite,
+  declineInvite,
+  getInvites,
   addRestaurantToGroup,
   removeRestaurantFromGroup,
   updateMemberPermissions

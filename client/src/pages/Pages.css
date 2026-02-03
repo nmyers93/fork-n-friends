@@ -418,6 +418,78 @@
   font-size: 0.9rem;
 }
 
+.permissions-label {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Invites section */
+.invites-section {
+  border: 2px solid #2196F3;
+  background: #f0f7ff;
+}
+
+.invite-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e3f2fd;
+  margin-bottom: 0.5rem;
+}
+
+.invite-item:last-child {
+  margin-bottom: 0;
+}
+
+.invite-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.invite-info strong {
+  color: #333;
+}
+
+.invite-info span {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.invite-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.decline-btn {
+  padding: 0.5rem 1rem;
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.decline-btn:hover {
+  background-color: #e68a00;
+}
+
+/* Mobile responsive for invites */
+@media (max-width: 768px) {
+  .invite-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
   .group-header-row {
