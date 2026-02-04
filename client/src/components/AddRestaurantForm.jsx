@@ -26,7 +26,7 @@ function AddRestaurantForm({ onAddRestaurant }) {
   
   // Search functionality states
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchLocation, setSearchLocation] = useState('New York') // Default search location
+  const [searchLocation, setSearchLocation] = useState('')
   const [searchResults, setSearchResults] = useState([])
   
   // Validation and wishlist states

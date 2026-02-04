@@ -6,13 +6,16 @@ require('dotenv').config()
  */
 const searchRestaurants = async (req, res) => {
   try {
-    const { query, location = 'Chicago' } = req.query
+    const { query, location = '' } = req.query
 
     if (!query) {
       return res.status(400).json({ error: 'Query parameter is required' })
     }
 
-    const url = `https://places-api.foursquare.com/places/search?query=${encodeURIComponent(query)}&near=${encodeURIComponent(location)}&categories=13000`
+    // Use provided location or default to general search
+    const searchLocation = location && location.trim() ? location : 'United States'
+
+    const url = `https://places-api.foursquare.com/places/search?query=${encodeURIComponent(query)}&near=${encodeURIComponent(searchLocation)}&categories=13000`
 
     const response = await fetch(url, {
       headers: {

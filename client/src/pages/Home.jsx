@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import AddRestaurantForm from '../components/AddRestaurantForm'
 import RestaurantList from '../components/RestaurantList'
-import { restaurants as restaurantsApi } from '../services/api'
 import RandomPicker from '../components/RandomPicker'
+import { restaurants as restaurantsApi } from '../services/api'
 import './Pages.css'
 
 /**
@@ -14,6 +14,7 @@ import './Pages.css'
 function Home({ user }) {
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showAddForm, setShowAddForm] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
@@ -81,22 +82,44 @@ function Home({ user }) {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>My Restaurants</h1>
+        <div className="page-title-row">
+          <h1>My Restaurants</h1>
+          {restaurants.length > 0 && (
+            <button className="random-picker-btn" onClick={() => setShowPicker(true)}>
+              🎲 Pick Random
+            </button>
+          )}
+        </div>
         <p>Add and manage your favorite restaurants</p>
-        {restaurants.length > 0 && (
-          <button className="random-picker-btn" onClick={() => setShowPicker(true)}>
-            🎲 Random Picker
-          </button>
+      </div>
+
+      {/* Collapsible Add Restaurant Section */}
+      <div className="collapsible-section">
+        <button 
+          className="collapsible-header"
+          onClick={() => setShowAddForm(!showAddForm)}
+        >
+          <span className="collapsible-title">
+            {showAddForm ? '▼' : '▶'} Add Restaurant
+          </span>
+          <span className="collapsible-action">
+            {showAddForm ? 'Click to close' : 'Click to add a restaurant'}
+          </span>
+        </button>
+        {showAddForm && (
+          <div className="collapsible-content">
+            <AddRestaurantForm onAddRestaurant={addRestaurant} />
+          </div>
         )}
       </div>
 
-      <AddRestaurantForm onAddRestaurant={addRestaurant} />
       <RestaurantList 
         restaurants={restaurants} 
         onUpdateRating={updateRating}
         onDeleteRestaurant={deleteRestaurant}
         viewMode="my"
       />
+
       {showPicker && (
         <RandomPicker
           restaurants={restaurants}

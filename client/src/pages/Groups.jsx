@@ -29,6 +29,7 @@ function Groups({ user }) {
   const [showAddRestaurant, setShowAddRestaurant] = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [showGroupPicker, setShowGroupPicker] = useState(false)
+  const [restaurantsExpanded, setRestaurantsExpanded] = useState(true)
 
   useEffect(() => {
     fetchGroups()
@@ -244,26 +245,24 @@ function Groups({ user }) {
     return (
       <div className="page">
         <div className="page-header">
-          <button className="back-btn" onClick={() => { setSelectedGroup(null); setGroupDetail(null) }}>
-            ← Back to Groups
-          </button>
-          <div className="group-header-row">
-            <h1>{groupDetail.group.name}</h1>
-            <div className="group-header-actions">
+            <button className="back-btn" onClick={() => { setSelectedGroup(null); setGroupDetail(null) }}>
+              ← Back to Groups
+            </button>
+            <div className="page-title-row">
+              <h1>{groupDetail.group.name}</h1>
               {groupDetail.restaurants.length > 0 && (
                 <button className="random-picker-btn" onClick={() => setShowGroupPicker(true)}>
-                  🎲 Pick
-                </button>
-              )}
-              {isCreator && (
-                <button className="delete-btn" onClick={() => handleDeleteGroup(selectedGroup.id)}>
-                  Delete Group
+                  🎲 Pick Random
                 </button>
               )}
             </div>
+            <p>Created by @{groupDetail.group.creator_username}</p>
+            {isCreator && (
+              <button className="delete-btn group-delete-btn" onClick={() => handleDeleteGroup(selectedGroup.id)}>
+                Delete Group
+              </button>
+            )}
           </div>
-          <p>Created by @{groupDetail.group.creator_username}</p>
-        </div>
 
         {/* Members section */}
         <div className="group-section">
@@ -326,10 +325,16 @@ function Groups({ user }) {
 
         {/* Restaurants section */}
         <div className="group-section">
-          <div className="group-section-header">
-            <h2>🍽️ Restaurants ({groupDetail.restaurants.length})</h2>
+          <button 
+            className="list-section-header"
+            onClick={() => setRestaurantsExpanded(!restaurantsExpanded)}
+          >
+            <h2>
+              <span className="section-arrow">{restaurantsExpanded ? '▼' : '▶'}</span>
+              🍽️ Restaurants ({groupDetail.restaurants.length})
+            </h2>
             {canEdit && (
-              <div className="restaurant-actions">
+              <div className="restaurant-actions" onClick={(e) => e.stopPropagation()}>
                 <button className="add-btn" onClick={() => setShowImport(true)}>
                   📥 Import
                 </button>
@@ -338,35 +343,43 @@ function Groups({ user }) {
                 </button>
               </div>
             )}
-          </div>
+          </button>
 
-          {showAddRestaurant && (
-            <AddRestaurantForm onAddRestaurant={handleAddRestaurant} />
-          )}
-
-          {groupDetail.restaurants.length === 0 ? (
-            <div className="empty-state">
-              <p>{canEdit ? 'No restaurants yet. Add one above!' : 'No restaurants in this group yet.'}</p>
-            </div>
-          ) : (
-            <div className="group-restaurants">
-              {groupDetail.restaurants.map((restaurant) => (
-                <div key={restaurant.id} className="group-restaurant-item">
-                  <div className="restaurant-info">
-                    <div>
-                      <strong>{restaurant.name}</strong> - {restaurant.cuisine}
-                      <p className="restaurant-location">{restaurant.location}</p>
-                      <span className="owner-tag">Added by @{restaurant.owner_username}</span>
-                    </div>
-                    <StarRating rating={restaurant.rating} onRatingChange={(newRating) => handleUpdateRating(restaurant.id, newRating)} />
-                  </div>
-                  {canEdit && (
-                    <button className="delete-btn" onClick={() => handleRemoveRestaurant(restaurant.id)}>
-                      Remove
-                    </button>
-                  )}
+          {restaurantsExpanded && (
+            <div className="list-section-content">
+              {/* Add restaurant form */}
+              {showAddRestaurant && (
+                <div className="group-add-form">
+                  <AddRestaurantForm onAddRestaurant={handleAddRestaurant} />
                 </div>
-              ))}
+              )}
+
+              {/* Restaurants list */}
+              {groupDetail.restaurants.length === 0 ? (
+                <div className="empty-state">
+                  <p>{canEdit ? 'No restaurants yet. Add one above!' : 'No restaurants in this group yet.'}</p>
+                </div>
+              ) : (
+                <div className="group-restaurants">
+                  {groupDetail.restaurants.map((restaurant) => (
+                    <div key={restaurant.id} className="group-restaurant-item">
+                      <div className="restaurant-info">
+                        <div>
+                          <strong>{restaurant.name}</strong> - {restaurant.cuisine}
+                          <p className="restaurant-location">{restaurant.location}</p>
+                          <span className="owner-tag">Added by @{restaurant.owner_username}</span>
+                        </div>
+                        <StarRating rating={restaurant.rating} onRatingChange={(newRating) => handleUpdateRating(restaurant.id, newRating)} />
+                      </div>
+                      {canEdit && (
+                        <button className="delete-btn" onClick={() => handleRemoveRestaurant(restaurant.id)}>
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
