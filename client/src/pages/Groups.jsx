@@ -3,6 +3,7 @@ import { groups as groupsApi, friends as friendsApi } from '../services/api'
 import AddRestaurantForm from '../components/AddRestaurantForm'
 import StarRating from '../components/StarRating'
 import ImportRestaurants from '../components/ImportRestaurants'
+import RandomPicker from '../components/RandomPicker'
 import './Pages.css'
 
 /**
@@ -27,6 +28,7 @@ function Groups({ user }) {
   const [showAddMember, setShowAddMember] = useState(false)
   const [showAddRestaurant, setShowAddRestaurant] = useState(false)
   const [showImport, setShowImport] = useState(false)
+  const [showGroupPicker, setShowGroupPicker] = useState(false)
 
   useEffect(() => {
     fetchGroups()
@@ -247,11 +249,18 @@ function Groups({ user }) {
           </button>
           <div className="group-header-row">
             <h1>{groupDetail.group.name}</h1>
-            {isCreator && (
-              <button className="delete-btn" onClick={() => handleDeleteGroup(selectedGroup.id)}>
-                Delete Group
-              </button>
-            )}
+            <div className="group-header-actions">
+              {groupDetail.restaurants.length > 0 && (
+                <button className="random-picker-btn" onClick={() => setShowGroupPicker(true)}>
+                  🎲 Pick
+                </button>
+              )}
+              {isCreator && (
+                <button className="delete-btn" onClick={() => handleDeleteGroup(selectedGroup.id)}>
+                  Delete Group
+                </button>
+              )}
+            </div>
           </div>
           <p>Created by @{groupDetail.group.creator_username}</p>
         </div>
@@ -367,6 +376,13 @@ function Groups({ user }) {
             onImport={handleImport}
             onClose={() => setShowImport(false)}
             existingGroupRestaurants={groupDetail.restaurants}
+          />
+        )}
+        {/* Random picker modal */}
+        {showGroupPicker && (
+          <RandomPicker
+            restaurants={groupDetail.restaurants}
+            onClose={() => setShowGroupPicker(false)}
           />
         )}
       </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import AddRestaurantForm from '../components/AddRestaurantForm'
 import RestaurantList from '../components/RestaurantList'
 import { restaurants as restaurantsApi } from '../services/api'
+import RandomPicker from '../components/RandomPicker'
 import './Pages.css'
 
 /**
@@ -13,6 +14,7 @@ import './Pages.css'
 function Home({ user }) {
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
     fetchRestaurants()
@@ -81,6 +83,11 @@ function Home({ user }) {
       <div className="page-header">
         <h1>My Restaurants</h1>
         <p>Add and manage your favorite restaurants</p>
+        {restaurants.length > 0 && (
+          <button className="random-picker-btn" onClick={() => setShowPicker(true)}>
+            🎲 Random Picker
+          </button>
+        )}
       </div>
 
       <AddRestaurantForm onAddRestaurant={addRestaurant} />
@@ -90,6 +97,12 @@ function Home({ user }) {
         onDeleteRestaurant={deleteRestaurant}
         viewMode="my"
       />
+      {showPicker && (
+        <RandomPicker
+          restaurants={restaurants}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
     </div>
   )
 }

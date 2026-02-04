@@ -1,0 +1,346 @@
+/* Modal overlay */
+.picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+/* Modal */
+.picker-modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+/* Header */
+.picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #eee;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.picker-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.picker-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  font-size: 1.5rem;
+  color: white;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.picker-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Mode selection buttons */
+.picker-modes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 1.5rem;
+  background: #f9fafb;
+}
+
+.mode-btn {
+  padding: 0.75rem;
+  border: 2px solid #ddd;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.mode-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+}
+
+/* Custom selection */
+.picker-custom {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #eee;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.picker-custom-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.picker-select-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #667eea;
+  background: white;
+  color: #667eea;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.picker-select-btn:hover {
+  background: #667eea;
+  color: white;
+}
+
+.picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.picker-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.picker-item:hover {
+  background: #f5f5f5;
+}
+
+.picker-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #667eea;
+  cursor: pointer;
+}
+
+/* Footer with pick button */
+.picker-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+.picker-pick-btn {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.picker-pick-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.picker-pick-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Animation display */
+.picker-animation {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+
+.picker-slot-machine {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.picker-spinning-text {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  animation: spin 0.3s ease-in-out infinite;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+}
+
+.picker-status {
+  font-size: 1.2rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Winner display */
+.picker-winner {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.picker-confetti {
+  font-size: 4rem;
+  animation: bounce 0.6s ease-out;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.picker-winner h3 {
+  margin: 1rem 0;
+  color: #667eea;
+  font-size: 1.3rem;
+}
+
+.picker-winner-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  margin: 1.5rem 0;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+}
+
+.picker-winner-card h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+}
+
+.picker-winner-card p {
+  margin: 0.25rem 0;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.picker-winner-location {
+  font-size: 0.95rem !important;
+  margin-top: 0.5rem !important;
+}
+
+.picker-winner-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.picker-again-btn,
+.picker-done-btn {
+  flex: 1;
+  padding: 0.875rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.picker-again-btn {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.picker-again-btn:hover {
+  background: #667eea;
+  color: white;
+}
+
+.picker-done-btn {
+  background: #4CAF50;
+  color: white;
+}
+
+.picker-done-btn:hover {
+  background: #45a049;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .picker-modes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .picker-spinning-text {
+    font-size: 1.5rem;
+  }
+
+  .picker-winner-card h2 {
+    font-size: 1.5rem;
+  }
+}
